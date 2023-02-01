@@ -83,13 +83,3 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
 # half_tolerance, float_tolerance
 DEFAULT_TYPE_TOLERANCE = (1e-2, 1e-3,)
 
-MODULE_TO_TOLERANCE = {
-    # k : moudle_name [or moudle_sha256]
-    # v : moudle_tolerance_tuple ("half_tolerance, float_tolerance, ") 
-
-    "345dce508de9470a5d6f7c772cf907dc92e1659662a5df5c2b5385c86a5c9694" : (1e-2, 1e-3,),
-    "5182ecc96b5fcc8a11ea77de9d4727fa6d1504741918b0c97b1ec4cb2de37d14" : (1e-2, 1,),
-
-    ## Add the right precision as needed ... ↓
-}
-

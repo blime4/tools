@@ -2,6 +2,7 @@ build
 dist
 hooktools.egg-info
 
+*/__pycache__
 
 *.xxx
 *.log

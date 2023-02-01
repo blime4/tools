@@ -224,7 +224,6 @@ class DumpPbFileTracer(TracerBase):
                 f.write(bytesAsString)
                 self.BackWardMetaData = MetaData()
 
-
 class Tracer(object):
 
     def __init__(self, config):
@@ -237,5 +236,24 @@ class Tracer(object):
 
         self.register_hooks = config.get('register_hooks', [])
 
+        self.trace_fns = []
+        self.untrace_fns = []
+        
         if "dump_pb_hook" in self.register_hooks:
             self.dump_pb_hook = DumpPbFileTracer(config)
+            self.trace_fns.append(self.dump_pb_hook.trace)
+            self.untrace_fns.append(self.dump_pb_hook.untrace)
+        if "check_nan_hook" in self.register_hooks:
+            pass
+        
+        
+            
+    def trace(self, epoch=-1, step=-1):
+        for trace_fn in self.trace_fns:
+            trace_fn(epoch, step)
+            
+    def untrace(self):
+        for untrace_fn in self.untrace_fns:
+            untrace_fn()
+    
+    
