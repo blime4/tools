@@ -10,7 +10,7 @@ tracer_name : "tracer_demo"
   # 1 : "FORWARD"
   # 2 : "BACKWARD"
   # 3 : "ALLTRACE"
-trace_mode : 0
+trace_mode : 3
 
 # hook configuration
   # hook trace : (module , input, output)

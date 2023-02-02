@@ -45,7 +45,7 @@ class TracerBase(object):
         config = handle_config(config)
 
         self.log_dir = config.get('log_dir', "./tmp")
-        self.tracer_name = config.get('trace_dir', "")
+        self.tracer_name = config.get('tracer_name', "")
         self.trace_mode = config.get('trace_mode', 0)
         # trace mode :
         # 0 : "NOTRACE"
@@ -77,7 +77,7 @@ class TracerBase(object):
         """
         if self.trace_mode == 0:
             return
-        print("tracing !!!!")
+        print("tracing !!!!, epoch=%d, step=%d" % (epoch, step))
         self.epoch = epoch
         self.step = step
 
@@ -114,7 +114,7 @@ class DumpPbFileTracer(TracerBase):
         self.max_number_of_modules_in_a_single_pb_file = self.dump_pb_hook_options.get(
             'max_number_of_modules_in_a_single_pb_file', 5)
         if self.forward_hook:
-            self.ForWardMetaData = MetaData()
+            self.ForwardMetaData = MetaData()
             self.forward_number = 0
             self.save_forward_number = 0
         if self.backward_hook:
@@ -148,35 +148,45 @@ class DumpPbFileTracer(TracerBase):
 
         if not self.only_input:
             if isinstance(output, torch.Tensor):
-                output = [output]
-            for out in output:
-                self._serialize_hook_outputs(out, hook_data)
+                self._serialize_hook_outputs(output, hook_data)
+            elif isinstance(output, list):
+                for out in output:
+                    self._serialize_hook_outputs(out, hook_data)
 
         if not self.only_output:
             for inp in input:  # type input is tuple
+                if isinstance(inp, list):
+                    for i in inp:
+                        self._serialize_hook_inputs(i, hook_data)
                 if isinstance(inp, torch.Tensor):
-                    inp = [inp]
-                for i in inp:
-                    self._serialize_hook_inputs(i, hook_data)
+                    self._serialize_hook_inputs(inp, hook_data)
 
         self._set_current_save_path(mode)
 
         if mode == "Forward":
-            forward_data = self.ForWardMetaData.datas.add()
+            forward_data = self.ForwardMetaData.datas.add()
             forward_data.CopyFrom(hook_data)
             self.forward_number = self.forward_number + 1
             number = self.forward_number % self.max_number_of_modules_in_a_single_pb_file
-            self.ForWardMetaData.datas.append(forward_data)
+            self.ForwardMetaData.datas.append(forward_data)
             if number == 0:
                 self._save_and_reinit_metadata(mode)
         else:
-            backward_data = self.BackWardMetaData.datas.add()
+            backward_data = self.BackwardMetaData.datas.add()
             backward_data.CopyFrom(hook_data)
             self.backward_number = self.backward_number + 1
             number = self.backward_number % self.max_number_of_modules_in_a_single_pb_file
-            self.BackWardMetaData.datas.append(backward_data)
+            self.BackwardMetaData.datas.append(backward_data)
             if number == 0:
                 self._save_and_reinit_metadata(mode)
+                
+    def _tensor_to_numpy(self, tensor):
+        try:
+            array = tensor.data.detach().cpu().numpy()
+        except:
+            array = tensor.data.detach().numpy()
+        return array
+
 
     def _serialize_hook_inputs(self, input, hook_data):
         hook_inputs = hook_data.inputs.add()
@@ -212,17 +222,17 @@ class DumpPbFileTracer(TracerBase):
                                    str(self.save_forward_number).zfill(5) + ".pb")
             self.save_forward_number = self.save_forward_number + 1
             with open(pb_file, "wb+") as f:
-                bytesAsString = self.ForWardMetaData.SerializeToString()
+                bytesAsString = self.ForwardMetaData.SerializeToString()
                 f.write(bytesAsString)
-                self.ForWardMetaData = MetaData()
+                self.ForwardMetaData = MetaData()
         else:
             pb_file = os.path.join(self.current_save_path, "backward_metadata_" +
                                    str(self.save_backward_number).zfill(5) + ".pb")
             self.save_backward_number = self.save_backward_number + 1
             with open(pb_file, "wb+") as f:
-                bytesAsString = self.BackWardMetaData.SerializeToString()
+                bytesAsString = self.BackwardMetaData.SerializeToString()
                 f.write(bytesAsString)
-                self.BackWardMetaData = MetaData()
+                self.BackwardMetaData = MetaData()
 
 class Tracer(object):
 
@@ -230,9 +240,7 @@ class Tracer(object):
         """
         config : yaml type configuration
         """
-        with open(config, 'r', encoding='utf-8') as file:
-            file_data = file.read()
-            config = yaml.load(file_data, Loader=yaml.FullLoader)
+        config = handle_config(config)
 
         self.register_hooks = config.get('register_hooks', [])
 
@@ -246,14 +254,17 @@ class Tracer(object):
         if "check_nan_hook" in self.register_hooks:
             pass
         
+        print(config)
         
-            
     def trace(self, epoch=-1, step=-1):
-        for trace_fn in self.trace_fns:
-            trace_fn(epoch, step)
+        if step > 0:
+            for trace_fn in self.trace_fns:
+                trace_fn(epoch, step)
             
     def untrace(self):
-        for untrace_fn in self.untrace_fns:
-            untrace_fn()
-    
+        try:
+            for untrace_fn in self.untrace_fns:
+                untrace_fn()
+        except:
+            pass
     
