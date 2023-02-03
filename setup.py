@@ -25,6 +25,12 @@ setup(
         'Programming Language :: C++',
         'Programming Language :: Python :: 3',
     ] + ['Programming Language :: Python :: 3.{}'.format(i) for i in range(python_min_version[1], version_range_max)],
+    package_data={
+        'hooktools':[
+            "config/*.yaml",
+            "config/*.yml",
+        ]
+    },
     license='BSD-3',
     keywords='pytorch machine learning',
 )

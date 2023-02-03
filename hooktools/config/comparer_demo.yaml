@@ -1,0 +1,42 @@
+# comparer configuration demo
+
+# log configuration
+log_dir : "./tmp"
+comparer_name : "comparer_demo"
+
+# compare configuration
+# compare mode: 
+  # 0 : compare directory
+  # 1 : compare protobuf file
+compare_mode : 0
+
+# ------- compare directory 
+compare_directory_options :
+  # you can configure which epochs and steps to be compared
+    # if compare_epochs or compare_steps is not set,
+    # default compare all epochs or steps in the compared directory.
+  compare_epochs :
+    - 0
+    - 1
+  compare_steps :
+    - 3
+    - 4
+  only_compare_forward : false
+  only_compare_backward : false
+  only_compare_input : false
+  only_compare_output : false
+  compared_directory_1 : "xxxx"
+  compared_directory_2 : "yyyy"
+
+# ------- compare directory 
+
+
+# ------- compare protobuf file 
+# compare_pb_file_options :
+#   compared_pb_file_1 : "xxxx"
+#   compared_pb_file_2 : "yyyy"
+
+# ------- compare protobuf file 
+
+verbose : false
+

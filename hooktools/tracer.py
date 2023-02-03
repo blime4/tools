@@ -8,34 +8,9 @@ import time
 import json
 import hashlib
 import yaml
-from pathlib import Path
 
 from hooktools.trace_pb2 import HookData, MetaData
-from hooktools.trace_utils import from_array
-
-
-def check_suffix(file="demo.yaml", suffix=('.yaml,'), msg=''):
-    # Check file(s) for acceptable suffix
-    if file and suffix:
-        if isinstance(suffix, str):
-            suffix = [suffix]
-        for f in file if isinstance(file, (list, tuple)) else [file]:
-            s = Path(f).suffix.lower()  # file suffix
-            if len(s):
-                assert s in suffix, f"{msg}{f} acceptable suffix is {suffix}"
-
-
-def handle_config(config):
-    if isinstance(config, str):
-        check_suffix(config, suffix=('.yaml', '.yml'))
-        with open(config, 'r', encoding='utf-8') as file:
-            file_data = file.read()
-            config = yaml.load(file_data, Loader=yaml.FullLoader)
-
-    assert isinstance(config, dict), f"unacceptable cofiguration! "
-    return config
-
-
+from hooktools.utils import from_array, handle_config
 class TracerBase(object):
 
     def __init__(self, config):
