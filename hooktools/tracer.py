@@ -8,9 +8,23 @@ import time
 import json
 import hashlib
 import yaml
+import pickle
 
 from hooktools.trace_pb2 import HookData, MetaData
 from hooktools.utils import from_array, handle_config
+
+
+class HookData(object):
+
+    def __init__(self, module, input, output):
+        self.module_name = str(module)
+        self.input = input
+        self.output = output
+
+    def __repr__(self) -> str:
+        return f"module_name : {self.module_name}, input.type : {type(self.input)}, output.type : {type(self.output)},"
+
+
 class TracerBase(object):
 
     def __init__(self, config):
@@ -44,6 +58,7 @@ class TracerBase(object):
         self.step = -1
 
         self.register_hooks = config.get('register_hooks', [])
+        self.current_save_path = self.log_dir
 
     def trace(self, epoch=-1, step=-1):
         """
@@ -79,6 +94,17 @@ class TracerBase(object):
 
     def hook_backward_fn(self, module, grad_input, grad_output):
         pass
+    
+    def _set_current_save_path(self, mode="Forward"):
+        self.current_save_path = self.forward_log_path if mode == "Forward" else self.backward_log_path
+        if self.epoch != -1:
+            self.current_save_path = os.path.join(
+                self.current_save_path, "epoch" + str(self.epoch))
+        if self.step != -1:
+            self.current_save_path = os.path.join(
+                self.current_save_path, "step" + str(self.step))
+        if not os.path.exists(self.current_save_path):
+            os.makedirs(self.current_save_path)
 
 
 class DumpPbFileTracer(TracerBase):
@@ -96,15 +122,14 @@ class DumpPbFileTracer(TracerBase):
             self.BackwardMetaData = MetaData()
             self.backward_number = 0
             self.save_backward_number = 0
-        self.current_save_path = self.log_dir
 
     def hook_forward_fn(self, module, input, output):
         super().hook_forward_fn(module, input, output)
-        self._hook_forward_impl(module, input, output, mode="Forward")
+        self._hook_impl(module, input, output, mode="Forward")
 
     def hook_backward_fn(self, module, grad_input, grad_output):
         super().hook_backward_fn(module, grad_input, grad_output)
-        self._hook_forward_impl(
+        self._hook_impl(
             module, grad_input, grad_output, mode="Backward")
 
     def trace(self, epoch=-1, step=-1):
@@ -117,7 +142,7 @@ class DumpPbFileTracer(TracerBase):
         if self.backward_hook:
             self._save_and_reinit_metadata("Backward")
 
-    def _hook_forward_impl(self, module, input, output, mode="Forward"):
+    def _hook_impl(self, module, input, output, mode="Forward"):
         hook_data = HookData()
         hook_data.module_name = str(module)
 
@@ -154,14 +179,13 @@ class DumpPbFileTracer(TracerBase):
             self.BackwardMetaData.datas.append(backward_data)
             if number == 0:
                 self._save_and_reinit_metadata(mode)
-                
+
     def _tensor_to_numpy(self, tensor):
         try:
             array = tensor.data.detach().cpu().numpy()
         except:
             array = tensor.data.detach().numpy()
         return array
-
 
     def _serialize_hook_inputs(self, input, hook_data):
         hook_inputs = hook_data.inputs.add()
@@ -180,21 +204,10 @@ class DumpPbFileTracer(TracerBase):
         hook_outputs.grad_fn = output.grad_fn.__class__.__name__
         hook_data.outputs.append(hook_outputs)
 
-    def _set_current_save_path(self, mode="Forward"):
-        self.current_save_path = self.forward_log_path if mode == "Forward" else self.backward_log_path
-        if self.epoch != -1:
-            self.current_save_path = os.path.join(
-                self.current_save_path, "epoch" + str(self.epoch))
-        if self.step != -1:
-            self.current_save_path = os.path.join(
-                self.current_save_path, "step" + str(self.step))
-        if not os.path.exists(self.current_save_path):
-            os.makedirs(self.current_save_path)
-
     def _save_and_reinit_metadata(self, mode="Forward"):
         if mode == "Forward":
             pb_file = os.path.join(self.current_save_path, "forward_metadata_" +
-                                   str(self.save_forward_number).zfill(5) + ".pb")
+                                   str(self.save_forward_number).zfill(6) + ".pb")
             self.save_forward_number = self.save_forward_number + 1
             with open(pb_file, "wb+") as f:
                 bytesAsString = self.ForwardMetaData.SerializeToString()
@@ -202,12 +215,63 @@ class DumpPbFileTracer(TracerBase):
                 self.ForwardMetaData = MetaData()
         else:
             pb_file = os.path.join(self.current_save_path, "backward_metadata_" +
-                                   str(self.save_backward_number).zfill(5) + ".pb")
+                                   str(self.save_backward_number).zfill(6) + ".pb")
             self.save_backward_number = self.save_backward_number + 1
             with open(pb_file, "wb+") as f:
                 bytesAsString = self.BackwardMetaData.SerializeToString()
                 f.write(bytesAsString)
                 self.BackwardMetaData = MetaData()
+
+
+class DumpPickleFileTracer(TracerBase):
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.dump_pickle_hook_options = config.get(
+            'dump_pickle_hook_options', {})
+        if self.forward_hook:
+            self.save_forward_number = 0
+        if self.backward_hook:
+            self.save_backward_number = 0
+
+    def hook_forward_fn(self, module, input, output):
+        super().hook_forward_fn(module, input, output)
+        self._hook_impl(module, input, output, "Forward")
+
+    def hook_backward_fn(self, module, grad_input, grad_output):
+        super().hook_backward_fn(module, grad_input, grad_output)
+        self._hook_impl(module, grad_input, grad_output, "Backward")
+
+    def trace(self, epoch=-1, step=-1):
+        return super().trace(epoch, step)
+
+    def untrace(self):
+        return super().untrace()
+
+    def _hook_impl(self, module, input, output, mode="Forward"):
+        if self.only_input:
+            output = None
+        if self.only_output:
+            input = None
+        self._set_current_save_path(mode)
+        hook_data = HookData(module, input, output)
+        self._save_pickle_data(hook_data)
+    
+    def _save_pickle_data(self, data, mode="Forward"):
+        if mode == "Forward":
+            pkl_file = os.path.join(self.current_save_path, "forward_" +
+                                    str(self.save_forward_number).zfill(6) + ".pkl")
+            self.save_forward_number = self.save_forward_number + 1
+            with open(pkl_file, "wb+") as f:
+                pickle.dump(data, f)
+        else:
+            pkl_file = os.path.join(self.current_save_path, "backward_" +
+                                    str(self.save_backward_number).zfill(6) + ".pkl")
+            self.save_backward_number = self.save_backward_number + 1
+            with open(pkl_file, "wb+") as f:
+                pickle.dump(data, f)
+                
+    # TODO : (optional) save module_name to pkl_file map
 
 class Tracer(object):
 
@@ -221,25 +285,27 @@ class Tracer(object):
 
         self.trace_fns = []
         self.untrace_fns = []
-        
+
         if "dump_pb_hook" in self.register_hooks:
             self.dump_pb_hook = DumpPbFileTracer(config)
             self.trace_fns.append(self.dump_pb_hook.trace)
             self.untrace_fns.append(self.dump_pb_hook.untrace)
+        if "dump_pickle_hook" in self.register_hooks:
+            self.dump_pkl_hook = DumpPickleFileTracer(config)
+            self.trace_fns.append(self.dump_pkl_hook.trace)
+            self.untrace_fns.append(self.dump_pkl_hook.untrace)
         if "check_nan_hook" in self.register_hooks:
             pass
-        
+
         print(config)
-        
+
     def trace(self, epoch=-1, step=-1):
-        if step > 0:
-            for trace_fn in self.trace_fns:
-                trace_fn(epoch, step)
-            
+        for trace_fn in self.trace_fns:
+            trace_fn(epoch, step)
+
     def untrace(self):
         try:
             for untrace_fn in self.untrace_fns:
                 untrace_fn()
         except:
             pass
-    
