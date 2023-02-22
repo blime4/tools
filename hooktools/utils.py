@@ -171,5 +171,5 @@ def ordered(obj):
     else:
         return obj
     
-def get_pb_file_list(path):
-    return [os.path.join(path, pb) for pb in sorted(os.listdir(path)) if pb.endswith('.pb')]
+def get_file_list(path, endswith="pkl"):
+    return [os.path.join(path, pb) for pb in sorted(os.listdir(path)) if pb.endswith(endswith)]

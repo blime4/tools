@@ -14,7 +14,7 @@ from hooktools.trace_pb2 import HookData, MetaData
 from hooktools.utils import from_array, handle_config
 
 
-class HookData(object):
+class PickleHookData(object):
 
     def __init__(self, module, input, output):
         self.module_name = str(module)
@@ -254,8 +254,8 @@ class DumpPickleFileTracer(TracerBase):
         if self.only_output:
             input = None
         self._set_current_save_path(mode)
-        hook_data = HookData(module, input, output)
-        self._save_pickle_data(hook_data)
+        hook_data = PickleHookData(module, input, output)
+        self._save_pickle_data(hook_data, mode=mode)
     
     def _save_pickle_data(self, data, mode="Forward"):
         if mode == "Forward":
@@ -263,13 +263,13 @@ class DumpPickleFileTracer(TracerBase):
                                     str(self.save_forward_number).zfill(6) + ".pkl")
             self.save_forward_number = self.save_forward_number + 1
             with open(pkl_file, "wb+") as f:
-                pickle.dump(data, f)
+                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
         else:
             pkl_file = os.path.join(self.current_save_path, "backward_" +
                                     str(self.save_backward_number).zfill(6) + ".pkl")
             self.save_backward_number = self.save_backward_number + 1
             with open(pkl_file, "wb+") as f:
-                pickle.dump(data, f)
+                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
                 
     # TODO : (optional) save module_name to pkl_file map
 
