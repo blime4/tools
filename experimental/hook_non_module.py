@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import inspect
+import yaml
+
 print(torch.__version__)
-# 类似的torch的方法，也可以用于tensor 和 functional
 class WrapModule(nn.Module):
     def __init__(self, orig_fn, user_forward_hook, user_backward_hook) -> None:
         super().__init__()
@@ -30,6 +32,7 @@ class Net(nn.Module):
 
     def forward(self, x):
         output = torch.pow(x, 2)
+        output = torch.atan(output)
         return output
 class Net2(nn.Module):
     def __init__(self):
@@ -58,9 +61,83 @@ def test_module():
     output = model(input)
     output.sum().backward()
 
+def is_startwith__(msg: str, prefix: str = '__') -> bool:
+    return msg.startswith(prefix)
+
+def get_all_ops():
+    torch_ops = []
+    for name, obj in torch.__dict__.items():
+        if callable(obj) and '__name__' in dir(obj) and not is_startwith__(name):
+            torch_ops.append(name)
+    return torch_ops
+
+
+def categorize_functions(module_name : str, builtin_funcs : list, funcs : list, ops : list):
+    module = eval(module_name)
+    stack = [(module, module_name)]
+    while stack:
+        module, prefix = stack.pop()
+        for name in dir(module):
+            if is_startwith__(name): continue
+            obj = getattr(module, name)
+            full_name = prefix + "." + name if prefix else name
+            if inspect.isbuiltin(obj):
+                builtin_funcs.append(full_name)
+            elif inspect.isfunction(obj):
+                funcs.append(full_name)
+            else:
+                if full_name.count(".") > 5 : continue
+                if callable(eval(full_name)):
+                    ops.append(full_name)
+                if inspect.ismodule(obj):
+                    stack.append((obj, full_name))
+
+TO_WRAPPER = [
+    "torch.nn.functional",
+]
+
+def remove_unnecessary_funcs(builtin_funcs : list, funcs : list, ops : list):
+    # TODO : remove the no need to wrapper functions
+    pass
+
+def get_non_nn_module_function():
+    builtin_funcs = []
+    default_funcs = []
+    other_funcs = []
+    for to in TO_WRAPPER:
+        categorize_functions(to, builtin_funcs, default_funcs, other_funcs)
+    remove_unnecessary_funcs(builtin_funcs, default_funcs, other_funcs)
+    return builtin_funcs, default_funcs, default_funcs
+
+def get_ops_in_native_functions(yaml_file):
+    with open(yaml_file, 'r') as file:
+        data = yaml.safe_load(file)["ops"]
+    return data
+
+def wrap_torch_ops():
+    ops = get_ops_in_native_functions("ops_in_native_functions.yaml")
+    for op in ops:
+        if getattr(torch, op, False):
+            op_name = eval("torch." + op)
+            setattr(torch, op, WrapModule(op_name, my_forward_hook, my_backward_hook))
+
+    print("wrap done!")
+
+def test_wrap_torch_ops():
+    wrap_torch_ops()
+    model = Net()
+    input = torch.tensor([2., 3], requires_grad=True)
+    print("input : ", input)
+    output = model(input)
+    output.sum().backward()
+
 def main():
-    test_torch_op()
-    test_module()
+    # test_torch_op()
+    # test_module()
+    # print(get_non_nn_module_function())
+    # get_ops_in_native_functions("ops_in_native_functions.yaml")
+    test_wrap_torch_ops()
+    pass
 
 if __name__ == '__main__':
     main()
