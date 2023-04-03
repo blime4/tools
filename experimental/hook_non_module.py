@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import inspect
 import yaml
+from functools import wraps
 
 print(torch.__version__)
 class WrapModule(nn.Module):
@@ -96,6 +97,14 @@ TO_WRAPPER = [
     "torch.nn.functional",
 ]
 
+RECURSION_ERROR_OPS = [
+    'ceil',
+    'ceil_',
+    'isfinite',
+    'masked_select',
+    'masked_select_backward'
+]
+
 def remove_unnecessary_funcs(builtin_funcs : list, funcs : list, ops : list):
     # TODO : remove the no need to wrapper functions
     pass
@@ -112,14 +121,23 @@ def get_non_nn_module_function():
 def get_ops_in_native_functions(yaml_file):
     with open(yaml_file, 'r') as file:
         data = yaml.safe_load(file)["ops"]
+    data = [i for i in data if i not in RECURSION_ERROR_OPS]
     return data
+
+def detail_op(detail, fn):
+    def wrapper(*args, **kwargs):
+        print(detail)
+        fn(*args, **kwargs)
+    return wrapper
 
 def wrap_torch_ops():
     ops = get_ops_in_native_functions("ops_in_native_functions.yaml")
     for op in ops:
         if getattr(torch, op, False):
             op_name = eval("torch." + op)
-            setattr(torch, op, WrapModule(op_name, my_forward_hook, my_backward_hook))
+            fw_fn = detail_op(op_name.__name__, my_forward_hook)
+            bw_fn = detail_op(op_name.__name__, my_backward_hook)
+            setattr(torch, op, WrapModule(op_name, fw_fn, bw_fn))
 
     print("wrap done!")
 
