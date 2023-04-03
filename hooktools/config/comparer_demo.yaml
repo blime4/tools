@@ -9,7 +9,7 @@ comparer_name: "comparer_demo"
 # 0 : compare directory
 # 1 : compare file
 # 2 : compare filelist
-compare_mode: 2
+compare_mode: 0
 
 # file_type :
 # 0 : pickle file
@@ -31,8 +31,8 @@ compare_directory_options:
   only_compare_backward: false
   only_compare_input: false
   only_compare_output: false
-  # compared_directory_1: "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_forward_hook_1675422052/epoch0/step0"
-  # compared_directory_2: "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_forward_hook_1675422052/epoch0/step1"
+  compared_directory_1: "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1677062509"
+  compared_directory_2: "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1677062575"
 
 # ------- compare file
 # compare_file_options :
@@ -43,8 +43,9 @@ compare_directory_options:
 compare_filelist_options :
   compared_filelist_1 : "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1675422052/epoch0/step0"
   compared_filelist_2 : "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1675422052/epoch0/step1"
-  compare_by_order : true 
 verbose: false
+
+compare_by_order : true
 
 # evaluation configuration
 evaluation_metrics:

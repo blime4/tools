@@ -61,14 +61,14 @@ class Comparer(object):
             compare_options = config.get('compare_file_options', {})
             self.compared_file_1 = compare_options.get("compared_file_1")
             self.compared_file_2 = compare_options.get("compared_file_2")
-            
+
         elif self.compare_mode == 2:
             compare_options = config.get('compare_filelist_options', {})
             self.compared_filelist_1 = compare_options.get("compared_filelist_1")
             self.compared_filelist_2 = compare_options.get("compared_filelist_2")
-            self.compare_by_order = compare_options.get("compare_by_order", False)
-            self.compare_both_file = not self.compare_by_order or compare_options.get("compare_both_file", False)
 
+        self.compare_by_order = config.get("compare_by_order", False)
+        self.compare_both_file = not self.compare_by_order or config.get("compare_both_file", False)
         self.verbose = compare_options.get('verbose', False)
         if self.verbose:
             print(config)
@@ -133,7 +133,7 @@ class Comparer(object):
             pb_tensor_1 = self._parse_pb_path(file_path_1)
             pb_tensor_2 = self._parse_pb_path(file_path_2)
             self.compare_pb_tensor(pb_tensor_1, pb_tensor_2)
-            
+
     def compare_pickle_file(self, file_path_1, file_path_2):
         # try:
         with open(file_path_1, "rb") as f1:
@@ -141,12 +141,12 @@ class Comparer(object):
             pkl_data_1 = pickle.load(f1)
         with open(file_path_2, "rb") as f2:
             f2.seek(0)
-            pkl_data_2 = pickle.load(f2)    
+            pkl_data_2 = pickle.load(f2)
         print(self.evaluator.evalute(pkl_data_1, pkl_data_2))
         # except:
         #     print("file_path_1 : ",file_path_1)
         #     print("file_path_2 : ",file_path_2)
-            
+
 
     def compare_pb_tensor(self, pb_tensor_1, pb_tensor_2):
         print("Not implemented yet")
@@ -195,16 +195,16 @@ class Comparer(object):
 
 
 class MetricData(object):
-    
+
     def __init__(self):
         self.input = []
         self.output = []
-        
+
     def __repr__(self) -> str:
         return f"input: {self.input} , output: {self.output}"
 
 class Evaluation(object):
-    
+
     def __init__(self, config):
         config = handle_config(config)
         self.evaluation_metrics = config.get('evaluation_metrics', [])
@@ -217,13 +217,13 @@ class Evaluation(object):
             self.register_evaluation("RMSE", self.evaluate_root_mean_squared_error)
         if "MAPE" in self.evaluation_metrics:
             self.register_evaluation("MAPE", self.evaluate_mean_absolute_percentage_error)
-        
+
     def register_evaluation(self, fn_name, evaluation_fn):
         self.registered_evaluations[fn_name] = evaluation_fn
-    
+
     def evaluate_cosine_similarity(self, data_1, data_2):
         # module_name : Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False), input.type : <class 'tuple'>, output.type : <class 'torch.Tensor'>
-        
+
         def _get_tensor_cosine_similarity(tensor_1, tensor_2, data_1, data_2):
             try:
                 tensor_1 = tensor_1.reshape(1, -1)
@@ -242,14 +242,14 @@ class Evaluation(object):
                 tensor_2 = tensor_2[:, :min_len]
                 cos = nn.CosineSimilarity(dim=1, eps=1e-6)
                 return cos(tensor_1, tensor_2).tolist()
-        
+
         def _get_struct_cosine_similarity(data_1, data_2):
             metric = MetricData()
             for input_1, input_2 in zip(data_1.input, data_2.input):
                 if isinstance(input_1, torch.Tensor):
                     cos = _get_tensor_cosine_similarity(input_1, input_2, data_1, data_2)
                     metric.input.append(cos)
-                elif isinstance(input_1, list):                    
+                elif isinstance(input_1, list):
                     cos_list = []
                     for inp1, inp2 in zip(input_1, input_2):
                         cos_list.append(_get_tensor_cosine_similarity(inp1, inp2, data_1, data_2))
@@ -268,19 +268,19 @@ class Evaluation(object):
                 print("Invalid output type : ", type(data_1.output))
             return metric
         return _get_struct_cosine_similarity(data_1, data_2)
-        
+
     def evaluate_mean_squared_error(self, data_1, data_2):
         data_1 = data_1.reshape(1, -1)
         data_2 = data_2.reshape(1, -1)
         loss = nn.MSELoss()
         return loss(data_1, data_2)
-    
+
     def evaluate_root_mean_squared_error(self, data_1, data_2):
         pass
-    
+
     def evaluate_mean_absolute_percentage_error(self, data_1, data_2):
         pass
-    
+
     def evalute(self, data_1, data_2):
         metrics = {}
         for fn_name, evaluation_fn in self.registered_evaluations.items():
