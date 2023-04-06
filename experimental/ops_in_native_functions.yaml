@@ -145,7 +145,7 @@ torch:
  - cdist
  - _cdist_backward
  - _cdist_forward
-#  - ceil
+ - ceil
 #  - ceil_
  - celu
  - celu_
