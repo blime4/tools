@@ -5,7 +5,7 @@ log_dir : "./tmp"
 tracer_name : "tracer_demo"
 
 # trace configuration
-# trace mode : 
+# trace mode :
   # 0 : "NOTRACE"
   # 1 : "FORWARD"
   # 2 : "BACKWARD"
@@ -19,20 +19,23 @@ trace_mode : 3
 only_input : false
 only_output : false
 
-# you can register the following hooks : 
+# you can register the following hooks :
   # dump_pb_hook
   # check_nan_hook
 # you can choose one or more hooks
 
-register_hooks : 
+register_hooks :
   # - dump_pb_hook
-  - dump_pickle_hook
+  # - dump_pickle_hook
   # - check_nan_hook
+  - dump_pt_hook
 
 dump_pb_hook_options :
   max_number_of_modules_in_a_single_pb_file : 5
 
-# dump_pickle_hook_options : 
+# dump_pickle_hook_options :
 
 check_nan_hook_options :
   raise_if_nan : false
+
+dump_pt_hook_options :

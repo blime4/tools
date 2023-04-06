@@ -25,6 +25,16 @@ class PickleHookData(object):
         return f"module_name : {self.module_name}, input.type : {type(self.input)}, output.type : {type(self.output)},"
 
 
+class NewHookData(object):
+
+    def __init__(self, module, input, output):
+        self.module_name = str(module)
+        self.input = input
+        self.output = output
+
+    def __repr__(self) -> str:
+        return f"module_name : {self.module_name}, input.type : {type(self.input)}, output.type : {type(self.output)},"
+
 class TracerBase(object):
 
     def __init__(self, config):
@@ -94,7 +104,7 @@ class TracerBase(object):
 
     def hook_backward_fn(self, module, grad_input, grad_output):
         pass
-    
+
     def _set_current_save_path(self, mode="Forward"):
         self.current_save_path = self.forward_log_path if mode == "Forward" else self.backward_log_path
         if self.epoch != -1:
@@ -256,7 +266,7 @@ class DumpPickleFileTracer(TracerBase):
         self._set_current_save_path(mode)
         hook_data = PickleHookData(module, input, output)
         self._save_pickle_data(hook_data, mode=mode)
-    
+
     def _save_pickle_data(self, data, mode="Forward"):
         if mode == "Forward":
             pkl_file = os.path.join(self.current_save_path, "forward_" +
@@ -270,8 +280,58 @@ class DumpPickleFileTracer(TracerBase):
             self.save_backward_number = self.save_backward_number + 1
             with open(pkl_file, "wb+") as f:
                 pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
-                
+
     # TODO : (optional) save module_name to pkl_file map
+
+class DumpPtFileTracer(TracerBase):
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.dump_pt_hook_options = config.get(
+            'dump_pt_hook_options', {}
+        )
+        if self.forward_hook:
+            self.save_forward_number = 0
+        if self.backward_hook:
+            self.save_backward_number = 0
+
+    def hook_forward_fn(self, module, input, output):
+        super().hook_forward_fn(module, input, output)
+        self._hook_impl(module, input, output, "Forward")
+
+    def hook_backward_fn(self, module, grad_input, grad_output):
+        super().hook_backward_fn(module, grad_input, grad_output)
+        self._hook_impl(module, grad_input, grad_output, "Backward")
+
+    def trace(self, epoch=-1, step=-1):
+        return super().trace(epoch, step)
+
+    def untrace(self):
+        return super().untrace()
+
+    def _hook_impl(self, module, input, output, mode="Forward"):
+        if self.only_input:
+            output = None
+        if self.only_output:
+            input = None
+        self._set_current_save_path(mode)
+        hook_data = NewHookData(module, input, output)
+        self._save_pt_data(hook_data, mode=mode)
+
+    def _save_pt_data(self, data, mode="Forward"):
+        if mode == "Forward":
+            pt_file = os.path.join(self.current_save_path, "forward_" +
+                                    str(self.save_forward_number).zfill(6) + ".pt")
+            self.save_forward_number = self.save_forward_number + 1
+            with open(pt_file, "wb+") as f:
+                torch.save(data, f)
+        else:
+            pt_file = os.path.join(self.current_save_path, "backward_" +
+                                    str(self.save_backward_number).zfill(6) + ".pt")
+            self.save_backward_number = self.save_backward_number + 1
+            with open(pt_file, "wb+") as f:
+                pickle.dump(data, f)
+
 
 class Tracer(object):
 
@@ -294,6 +354,11 @@ class Tracer(object):
             self.dump_pkl_hook = DumpPickleFileTracer(config)
             self.trace_fns.append(self.dump_pkl_hook.trace)
             self.untrace_fns.append(self.dump_pkl_hook.untrace)
+        if "dump_pt_hook" in self.register_hooks:
+            self.dump_pt_hook = DumpPtFileTracer(config)
+            self.trace_fns.append(self.dump_pt_hook.trace)
+            self.untrace_fns.append(self.dump_pt_hook.untrace)
+
         if "check_nan_hook" in self.register_hooks:
             pass
 
