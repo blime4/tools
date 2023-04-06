@@ -9,6 +9,8 @@ print(torch.__version__)
 class WrapModule(nn.Module):
     def __init__(self, orig_fn, user_forward_hook, user_backward_hook) -> None:
         super().__init__()
+        if isinstance(orig_fn, str):
+            orig_fn = eval(orig_fn)
         self.orig_fn = orig_fn
         self.register_forward_hook(user_forward_hook)
         self.register_backward_hook(user_backward_hook)
@@ -42,6 +44,7 @@ class Net2(nn.Module):
 
     def forward(self, x):
         output = self.fc(x)
+        output = F.normalize(output, dim=0)
         return output
 
 def test_torch_op():
@@ -120,7 +123,7 @@ def get_non_nn_module_function():
 
 def get_ops_in_native_functions(yaml_file):
     with open(yaml_file, 'r') as file:
-        data = yaml.safe_load(file)["ops"]
+        data = yaml.safe_load(file)["torch"]
     data = [i for i in data if i not in RECURSION_ERROR_OPS]
     return data
 
@@ -149,12 +152,46 @@ def test_wrap_torch_ops():
     output = model(input)
     output.sum().backward()
 
+def parse_yaml(yaml_file):
+    with open(yaml_file, 'r') as file:
+        data = yaml.safe_load(file)
+
+    apis = set()
+    for key, values in data.items():
+        for value in values:
+            apis.add(key+"."+value)
+    return list(apis)
+
+def wrap_supported_apis(yaml_file):
+    supported_apis = parse_yaml(yaml_file)
+    wrap_setattr(supported_apis)
+
+
+def wrap_setattr(apis: list):
+    for api in apis:
+        base, function = eval(".".join(api.split(".")[:-1])), api.split(".")[-1]
+        fw_fn = detail_op(api, my_forward_hook)
+        bw_fn = detail_op(api, my_backward_hook)
+        setattr(base, function, WrapModule(api, fw_fn, bw_fn))
+
+def test_wrap_supported_apis():
+    wrap_supported_apis("supported_apis.yaml")
+    model = Net2()
+    input = torch.tensor([1., 2], requires_grad=True)
+    print("input:", input)
+    output = model(input)
+    output.sum().backward()
+
+
+
 def main():
     # test_torch_op()
     # test_module()
     # print(get_non_nn_module_function())
     # get_ops_in_native_functions("ops_in_native_functions.yaml")
-    test_wrap_torch_ops()
+    # test_wrap_torch_ops()
+    # wrap_supported_apis()
+    test_wrap_supported_apis()
     pass
 
 if __name__ == '__main__':
