@@ -18,13 +18,18 @@ class WrapModule(nn.Module):
     def forward(self, *args, **kwargs):
         return self.orig_fn(*args, **kwargs)
 
+    def __repr__(self):
+        return str(self.orig_fn.__module__) + '.' + str(self.orig_fn.__name__)
+
 def my_forward_hook(module, features_in, features_out):
     print("print my_forward_hook:")
+    print("module : ", module)
     print("features_in:", features_in)
     print("features_out:", features_out)
 
 def my_backward_hook(module, features_in, features_out):
     print("print my_backward_hook:")
+    print("module : ", module)
     print("features_in:", features_in)
     print("features_out:", features_out)
 

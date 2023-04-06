@@ -39,3 +39,11 @@ check_nan_hook_options :
   raise_if_nan : false
 
 dump_pt_hook_options :
+
+
+# hacker configuration demo
+
+hacker_non_nn_modules : true
+hacker_options :
+  supported_apis_yaml : "/LocalRun/shaobo.xie/2_Pytorch/Tool/hooktools/config/supported_apis.yaml"
+  verbose : True

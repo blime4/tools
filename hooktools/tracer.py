@@ -12,6 +12,7 @@ import pickle
 
 from hooktools.trace_pb2 import HookData, MetaData
 from hooktools.utils import from_array, handle_config
+from hooktools.hacker import Hacker
 
 
 class PickleHookData(object):
@@ -60,15 +61,23 @@ class TracerBase(object):
         if self.forward_hook:
             self.forward_log_path = os.path.join(
                 self.log_dir, self.tracer_name + "_forward_hook_"+self.timestamp)
+            print("save directory :  forward_log_path : ", self.forward_log_path)
         if self.backward_hook:
             self.backward_log_path = os.path.join(
                 self.log_dir, self.tracer_name + "_backward_hook_"+self.timestamp)
+            print("save directory :  backward_log_path : ", self.backward_log_path)
 
         self.epoch = -1
         self.step = -1
 
         self.register_hooks = config.get('register_hooks', [])
         self.current_save_path = self.log_dir
+
+        hacker_non_nn_modules = config.get("hacker_non_nn_modules", False)
+        self.has_hacker = False
+        if hacker_non_nn_modules:
+            self.hacker = Hacker(config)
+            self.has_hacker = True
 
     def trace(self, epoch=-1, step=-1):
         """
@@ -294,6 +303,9 @@ class DumpPtFileTracer(TracerBase):
             self.save_forward_number = 0
         if self.backward_hook:
             self.save_backward_number = 0
+
+        if self.has_hacker:
+            self.hacker.hack(self.hook_forward_fn, self.hook_backward_fn)
 
     def hook_forward_fn(self, module, input, output):
         super().hook_forward_fn(module, input, output)
