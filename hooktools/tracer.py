@@ -342,7 +342,7 @@ class DumpPtFileTracer(TracerBase):
                                     str(self.save_backward_number).zfill(6) + ".pt")
             self.save_backward_number = self.save_backward_number + 1
             with open(pt_file, "wb+") as f:
-                pickle.dump(data, f)
+                torch.save(data, f)
 
 
 class Tracer(object):

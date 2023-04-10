@@ -27,11 +27,11 @@ class Comparer(object):
         self.log_dir = config.get('log_dir', "./tmp")
         self.comparer_name = config.get('comparer_name', "")
         self.compare_mode = config.get('compare_mode', 0)
-        self.file_type = config.get('file_type', 0)
+        self.file_type = config.get('file_type', 'pt')
         # compare mode:
         # 0 : compare directory
         # 1 : compare protobuf file
-        self.evaluator = Evaluation(config)
+        self.evaluator = Evaluator(config)
 
         if self.compare_mode == 0:
             compare_options = config.get('compare_directory_options', {})
@@ -81,8 +81,8 @@ class Comparer(object):
         elif self.compare_mode == 1:
             self.compare_file()
         elif self.compare_mode == 2:
-            filelist_1 = get_file_list(self.compared_filelist_1)
-            filelist_2 = get_file_list(self.compared_filelist_2)
+            filelist_1 = get_file_list(path=self.compared_filelist_1, endswith=self.file_type)
+            filelist_2 = get_file_list(path=self.compared_filelist_2, endswith=self.file_type)
             self.compare_filelist(filelist_1, filelist_2)
 
     def compare_directory(self):
@@ -94,7 +94,7 @@ class Comparer(object):
             epochs = ["epoch" + str(i) for i in self.compare_epochs]
 
         # epoch --------------------------------
-        for epoch in tqdm(epochs):
+        for epoch in tqdm(epochs, desc="epoch : "):
             epoch_path_1 = os.path.join(self.compared_directory_1, epoch)
             epoch_path_2 = os.path.join(self.compared_directory_2, epoch)
 
@@ -104,13 +104,12 @@ class Comparer(object):
                 steps = ["step" + str(i) for i in self.compare_steps]
 
             # step --------------------------------
-            for step in tqdm(steps):
+            for step in tqdm(steps, desc="step : "):
                 step_path_1 = os.path.join(epoch_path_1, step)
                 step_path_2 = os.path.join(epoch_path_2, step)
 
-                filelist_1 = get_file_list(step_path_1)
-                filelist_2 = get_file_list(step_path_2)
-
+                filelist_1 = get_file_list(path=step_path_1, endswith=self.file_type)
+                filelist_2 = get_file_list(path=step_path_2, endswith=self.file_type)
                 self.compare_filelist(filelist_1, filelist_2)
 
     def compare_filelist(self, filelist_1, filelist_2):
@@ -120,19 +119,23 @@ class Comparer(object):
             for file1, file2 in tqdm(zip(both_file_list_1, both_file_list_2)):
                 self.compare_file(file1, file2)
         elif self.compare_by_order:
-            for file1, file2 in tqdm(zip(filelist_1, filelist_2)):
+            for file1, file2 in tqdm(zip(filelist_1, filelist_2), desc="file: "):
                 self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
         if not file_path_1 and not file_path_2:
             file_path_1 = self.compared_file_1
             file_path_2 = self.compared_file_2
-        if self.file_type == 0:
+        if self.file_type == "pkl":
             self.compare_pickle_file(file_path_1, file_path_2)
-        elif self.file_type == 1:
+        elif self.file_type == "pb":
             pb_tensor_1 = self._parse_pb_path(file_path_1)
             pb_tensor_2 = self._parse_pb_path(file_path_2)
             self.compare_pb_tensor(pb_tensor_1, pb_tensor_2)
+        elif self.file_type == "pt":
+            print("file_path_1 ", file_path_1)
+            print("file_path_2 ", file_path_2)
+            self.compare_pt_file(file_path_1, file_path_2)
 
     def compare_pickle_file(self, file_path_1, file_path_2):
         # try:
@@ -146,6 +149,15 @@ class Comparer(object):
         # except:
         #     print("file_path_1 : ",file_path_1)
         #     print("file_path_2 : ",file_path_2)
+
+    def compare_pt_file(self, file_path_1, file_path_2):
+        with open(file_path_1, "rb") as f1:
+            f1.seek(0)
+            pt_data_1 = torch.load(f1)
+        with open(file_path_2, "rb") as f2:
+            f2.seek(0)
+            pt_data_2 = torch.load(f2)
+        print(self.evaluator.evalute(pt_data_1, pt_data_2))
 
 
     def compare_pb_tensor(self, pb_tensor_1, pb_tensor_2):
@@ -203,7 +215,7 @@ class MetricData(object):
     def __repr__(self) -> str:
         return f"input: {self.input} , output: {self.output}"
 
-class Evaluation(object):
+class Evaluator(object):
 
     def __init__(self, config):
         config = handle_config(config)

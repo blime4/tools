@@ -70,7 +70,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
                 raise NotImplementedError(
                     "Unrecognized object in the object array, expect a string, or array of bytes: ", str(type(e)))
         return tensor
-    
+
     # For numerical types, directly use numpy raw bytes.
     try:
         dtype = trace_mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
@@ -141,7 +141,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
                 .astype(np_dtype)
                 .reshape(dims)
             )
-            
+
 def check_suffix(file="demo.yaml", suffix=('.yaml,'), msg=''):
     # Check file(s) for acceptable suffix
     if file and suffix:
@@ -170,6 +170,6 @@ def ordered(obj):
         return sorted(ordered(x) for x in obj)
     else:
         return obj
-    
-def get_file_list(path, endswith="pkl"):
+
+def get_file_list(path, endswith="pt"):
     return [os.path.join(path, pb) for pb in sorted(os.listdir(path)) if pb.endswith(endswith)]
