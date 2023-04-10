@@ -136,7 +136,7 @@ class TracerBase(object):
         else:
             self.module_name_2_file_path[module_name].append(file_path)
 
-        map_file = os.path.join(self.log_dir, "module2path.json")
+        map_file = os.path.join(self.log_dir, "module2path_"+self.timestamp+".json")
         with open(map_file, "w+", encoding='utf-8') as file:
             file.write(json.dumps(self.module_name_2_file_path, ensure_ascii=False))
 
