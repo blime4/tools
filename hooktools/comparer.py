@@ -159,7 +159,6 @@ class Comparer(object):
             pt_data_2 = torch.load(f2)
         print(self.evaluator.evalute(pt_data_1, pt_data_2))
 
-
     def compare_pb_tensor(self, pb_tensor_1, pb_tensor_2):
         print("Not implemented yet")
         pass
@@ -266,8 +265,8 @@ class Evaluator(object):
                     for inp1, inp2 in zip(input_1, input_2):
                         cos_list.append(_get_tensor_cosine_similarity(inp1, inp2, data_1, data_2))
                     metric.input.append(cos_list)
-                # else:
-                #     print("Invalid input type : ", type(input_1))
+                else:
+                    print("Invalid input type : ", type(input_1))
             if isinstance(data_1.output, torch.Tensor):
                 cos = _get_tensor_cosine_similarity(data_1.output, data_2.output, data_1, data_2)
                 metric.output.append(cos)
