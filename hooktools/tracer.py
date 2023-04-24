@@ -79,6 +79,8 @@ class TracerBase(object):
             self.hacker = Hacker(config)
             self.has_hacker = True
 
+        self.module_name_2_file_path = {}
+
     def trace(self, epoch=-1, step=-1):
         """
         epoch : integer number of epoch
@@ -125,6 +127,18 @@ class TracerBase(object):
         if not os.path.exists(self.current_save_path):
             os.makedirs(self.current_save_path)
 
+    def _save_module_name_file_path_map(self, module_name, file_path):
+        module_name = str(module_name)
+        file_path = str(file_path)
+        if module_name not in self.module_name_2_file_path.keys():
+            self.module_name_2_file_path[module_name] = []
+            self.module_name_2_file_path[module_name].append(file_path)
+        else:
+            self.module_name_2_file_path[module_name].append(file_path)
+
+        map_file = os.path.join(self.log_dir, "module2path_"+self.timestamp+".json")
+        with open(map_file, "w+", encoding='utf-8') as file:
+            file.write(json.dumps(self.module_name_2_file_path, ensure_ascii=False))
 
 class DumpPbFileTracer(TracerBase):
 
@@ -336,12 +350,14 @@ class DumpPtFileTracer(TracerBase):
                                     str(self.save_forward_number).zfill(6) + ".pt")
             self.save_forward_number = self.save_forward_number + 1
             with open(pt_file, "wb+") as f:
+                self._save_module_name_file_path_map(data.module_name, pt_file)
                 torch.save(data, f)
         else:
             pt_file = os.path.join(self.current_save_path, "backward_" +
                                     str(self.save_backward_number).zfill(6) + ".pt")
             self.save_backward_number = self.save_backward_number + 1
             with open(pt_file, "wb+") as f:
+                self._save_module_name_file_path_map(data.module_name, pt_file)
                 torch.save(data, f)
 
 
