@@ -45,5 +45,5 @@ dump_pt_hook_options :
 
 hacker_non_nn_modules : true
 hacker_options :
-  supported_apis_yaml : "/LocalRun/shaobo.xie/2_Pytorch/Tool/hooktools/config/supported_apis.yaml"
+  supported_apis_yaml : "/LocalRun/blime/2_Pytorch/tools/hooktools/config/supported_apis.yaml"
   verbose : True
