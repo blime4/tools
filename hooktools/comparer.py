@@ -1,18 +1,6 @@
-from contextlib import contextmanager
-import io
 import os
-import copy
-
-import time
-import json
-import hashlib
 from hooktools.utils import handle_config, get_file_list
-from pathlib import Path
 from tqdm import tqdm
-from hooktools.trace_pb2 import HookData, MetaData, TensorProto, IOData
-from hooktools.utils import to_array
-from hooktools.tracer import PickleHookData
-import pickle
 import torch
 import torch.nn as nn
 
@@ -126,29 +114,10 @@ class Comparer(object):
         if not file_path_1 and not file_path_2:
             file_path_1 = self.compared_file_1
             file_path_2 = self.compared_file_2
-        if self.file_type == "pkl":
-            self.compare_pickle_file(file_path_1, file_path_2)
-        elif self.file_type == "pb":
-            pb_tensor_1 = self._parse_pb_path(file_path_1)
-            pb_tensor_2 = self._parse_pb_path(file_path_2)
-            self.compare_pb_tensor(pb_tensor_1, pb_tensor_2)
-        elif self.file_type == "pt":
+        if self.file_type == "pt":
             print("file_path_1 ", file_path_1)
             print("file_path_2 ", file_path_2)
             self.compare_pt_file(file_path_1, file_path_2)
-
-    def compare_pickle_file(self, file_path_1, file_path_2):
-        # try:
-        with open(file_path_1, "rb") as f1:
-            f1.seek(0)
-            pkl_data_1 = pickle.load(f1)
-        with open(file_path_2, "rb") as f2:
-            f2.seek(0)
-            pkl_data_2 = pickle.load(f2)
-        print(self.evaluator.evalute(pkl_data_1, pkl_data_2))
-        # except:
-        #     print("file_path_1 : ",file_path_1)
-        #     print("file_path_2 : ",file_path_2)
 
     def compare_pt_file(self, file_path_1, file_path_2):
         with open(file_path_1, "rb") as f1:
@@ -159,9 +128,6 @@ class Comparer(object):
             pt_data_2 = torch.load(f2)
         print(self.evaluator.evalute(pt_data_1, pt_data_2))
 
-    def compare_pb_tensor(self, pb_tensor_1, pb_tensor_2):
-        print("Not implemented yet")
-        pass
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -192,18 +158,6 @@ class Comparer(object):
             filelist_2[0]), pb) for pb in both_pb_file_list]
 
         return both_file_list_1, both_file_list_2
-
-    def _parse_from_string(self, pb_file, proto):
-        # Load the TensorProto
-        with open(pb_file, "rb") as f:
-            proto.ParseFromString(f.read())
-        return proto
-
-    def _parse_pb_path(self, pb_file_path):
-        pb = MetaData()
-        proto_tensor = self._parse_from_string(pb_file_path, pb)
-        return proto_tensor
-
 
 class MetricData(object):
 

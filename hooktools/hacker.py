@@ -1,27 +1,15 @@
-from contextlib import contextmanager
-import torch
-import io
-import os
-import copy
 
-import time
-import json
-import hashlib
-import yaml
+import torch
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import inspect
-import yaml
 from functools import wraps
 from collections import OrderedDict, namedtuple
 import itertools
 import functools
 import torch.utils.hooks as hooks
-from typing import Union, Tuple, Any, Callable, Iterator, Set, Optional, overload, TypeVar, Mapping, Dict, List
+from typing import Any, Callable, Optional, Dict
 
-from hooktools.trace_pb2 import HookData, MetaData
-from hooktools.utils import from_array, handle_config
+from hooktools.utils import handle_config
 
 UNSUPPORT_CLASS_TYPE = ["type", "method_descriptor"]
 BASE_TYPE = [int, float, bool]
@@ -100,6 +88,7 @@ class WrapModule(HackedNNModule):
         self.orig_fn = orig_fn
         self.register_forward_hook(user_forward_hook)
         self.register_backward_hook(user_backward_hook)
+        self.is_non_nn_module = True
 
     def forward(self, *args, **kwargs):
         try:
