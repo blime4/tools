@@ -151,12 +151,10 @@ class HackerBase(object):
             fw_fn = self.default_forward_hook
         if not bw_fn:
             bw_fn = self.default_backward_hook
-        print("apis : ", apis)
         for api_class, api_list in apis.items():
             for api in api_list:
                 if self.is_unsupport_class_type(api):
                     continue
-                print("api : ", api)
                 base, function = eval(".".join(api.split(".")[:-1])), api.split(".")[-1]
                 fw_fn = self.detail_op(api, fw_fn)
                 bw_fn = self.detail_op(api, bw_fn)

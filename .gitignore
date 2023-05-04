@@ -6,3 +6,4 @@ hooktools.egg-info
 
 *.xxx
 *.log
+*tmp

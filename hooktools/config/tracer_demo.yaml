@@ -45,7 +45,7 @@ dump_pt_hook_options :
 
 hacker_non_nn_modules : true
 hacker_options :
-  verbose : True
+  verbose : false
 
   supported_apis:
     # demonstrates
@@ -602,7 +602,7 @@ hacker_options :
       - torch.Tensor.atan2_
       - torch.Tensor.all
       - torch.Tensor.any
-      - torch.Tensor.backward
+      # - torch.Tensor.backward
       - torch.Tensor.baddbmm
       - torch.Tensor.baddbmm_
       - torch.Tensor.bernoulli
@@ -964,7 +964,7 @@ hacker_options :
       - torch.Tensor.zero_
 
     torch.autograd:
-      - torch.autograd.backward
+      # - torch.autograd.backward
       - torch.autograd.grad
       - torch.autograd.functional.jacobian
       - torch.autograd.functional.hessian

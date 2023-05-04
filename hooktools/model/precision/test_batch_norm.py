@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import os
 import hooktools
 from hooktools import Tracer
@@ -15,17 +16,31 @@ class BatchNorm1dNet(nn.Module):
         x = self.bn1(x)
         return x
 
-
-def test_batchnorm():
+def test_batchnorm1dnet():
     net = BatchNorm1dNet()
-    x = torch.randn((32, 10))
-    output = net(x)
-    print(output)
+
+    input = torch.randn(32, 10)
+    target = torch.randn(32, 20)
+
+    optimizer = optim.SGD(net.parameters(), lr=0.01)
+    criterion = nn.MSELoss()
+
+    for i in range(10):
+        optimizer.zero_grad()
+        output = net(input)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+
+    input.requires_grad_()
+    output = net(input)
+    grad_output = torch.randn(output.size())
+    output.backward(grad_output)
 
 config_path = os.path.join(hooktools.__path__[0], "config")
 
 if __name__ == "__main__":
     trace = Tracer(os.path.join(config_path, "tracer_demo.yaml"))
     trace.trace()
-    test_batchnorm()
+    test_batchnorm1dnet()
     trace.untrace()
