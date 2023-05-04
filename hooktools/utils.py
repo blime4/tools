@@ -156,9 +156,15 @@ def check_suffix(file="demo.yaml", suffix=('.yaml,'), msg=''):
 def handle_config(config):
     if isinstance(config, str):
         check_suffix(config, suffix=('.yaml', '.yml'))
+        def join_path(loader, node):
+            file_path = os.path.dirname(loader.name)
+            path = loader.construct_scalar(node)
+            return os.path.join(file_path, path)
+
+        yaml.add_constructor('!join_path', join_path)
         with open(config, 'r', encoding='utf-8') as file:
             file_data = file.read()
-            config = yaml.load(file_data, Loader=yaml.FullLoader)
+            config = yaml.safe_load(file_data)
 
     assert isinstance(config, dict), f"unacceptable cofiguration! "
     return config

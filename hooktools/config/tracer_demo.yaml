@@ -45,5 +45,1158 @@ dump_pt_hook_options :
 
 hacker_non_nn_modules : true
 hacker_options :
-  supported_apis_yaml : "/LocalRun/blime/2_Pytorch/tools/hooktools/config/supported_apis.yaml"
   verbose : True
+
+  supported_apis:
+    # demonstrates
+    # At present, it is only the stage to verify whether the function is available, and the API is not yet complete
+
+    torch:
+      # - is_storage
+      # - is_complex
+      # - is_floating_point
+      # - is_nonzero
+      # - set_default_dtype # have some error
+      # - get_default_dtype # have some error
+      # - set_default_tensor_type
+      # - numel
+      # - set_printoptions
+      # - set_flush_denormal
+      - torch.abs
+      - torch.absolute
+      - torch.acos
+      - torch.acosh
+      - torch.add
+      - torch.addbmm
+      - torch.addcdiv
+      - torch.addcmul
+      - torch.addmm
+      - torch.addmv
+      - torch.addr
+      - torch.all
+      - torch.allclose
+      - torch.amax
+      - torch.amin
+      - torch.angle
+      - torch.any
+      - torch.arange
+      - torch.arccos
+      - torch.arccosh
+      - torch.arcsin
+      - torch.arcsinh
+      - torch.arctan
+      - torch.arctanh
+      - torch.argmax
+      - torch.argmin
+      - torch.argsort
+      - torch.asin
+      - torch.asinh
+      - torch._assert
+      - torch.as_strided
+      - torch.as_tensor
+      - torch.atan
+      - torch.atan2
+      - torch.atanh
+      - torch.atleast_1d
+      - torch.atleast_2d
+      - torch.atleast_3d
+      - torch.baddbmm
+      - torch.bernoulli
+      - torch.bincount
+      - torch.bitwise_and
+      - torch.bitwise_not
+      - torch.bitwise_or
+      - torch.bitwise_xor
+      - torch.block_diag
+      - torch.bmm
+      - torch.broadcast_shapes
+      - torch.broadcast_tensors
+      - torch.broadcast_to
+      - torch.bucketize
+      - torch.can_cast
+      - torch.cartesian_prod
+      - torch.cat
+      - torch.cdist
+      - torch.ceil
+      - torch.chain_matmul
+      - torch.chunk
+      - torch.clamp
+      - torch.clip
+      - torch.clone
+      - torch.column_stack
+      - torch.combinations
+      - torch.complex
+      - torch.conj
+      - torch.copysign
+      - torch.cos
+      - torch.cosh
+      - torch.count_nonzero
+      - torch.cross
+      - torch.cummax
+      - torch.cummin
+      - torch.cumprod
+      - torch.cumsum
+      - torch.deg2rad
+      - torch.dequantize
+      - torch.diag
+      - torch.diag_embed
+      - torch.diagflat
+      - torch.diagonal
+      - torch.diff
+      - torch.digamma
+      - torch.dist
+      - torch.div
+      - torch.divide
+      - torch.dot
+      - torch.dstack
+      - torch.eig
+      - torch.einsum
+      - torch.empty
+      - torch.empty_like
+      - torch.empty_strided
+      - torch.enable_grad
+      - torch.eq
+      - torch.equal
+      - torch.erf
+      - torch.erfc
+      - torch.erfinv
+      - torch.exp
+      - torch.exp2
+      - torch.expm1
+      - torch.eye
+      - torch.fake_quantize_per_channel_affine
+      - torch.fake_quantize_per_tensor_affine
+      - torch.fix
+      - torch.flatten
+      - torch.flip
+      - torch.fliplr
+      - torch.flipud
+      - torch.floor
+      - torch.floor_divide
+      - torch.fmax
+      - torch.fmin
+      - torch.fmod
+      - torch.frac
+      - torch.from_numpy
+      - torch.full
+      - torch.full_like
+      - torch.gather
+      - torch.gcd
+      - torch.ge
+      - torch.geqrf
+      - torch.ger
+      - torch.get_num_interop_threads
+      - torch.get_num_threads
+      - torch.greater
+      - torch.greater_equal
+      - torch.heaviside
+      - torch.histc
+      - torch.hstack
+      - torch.hypot
+      - torch.imag
+      - torch.index_select
+      - torch.initial_seed
+      - torch.isclose
+      - torch.isfinite
+      - torch.isinf
+      - torch.isnan
+      - torch.isneginf
+      - torch.isposinf
+      - torch.isreal
+      - torch.is_tensor
+      - torch.kron
+      - torch.kthvalue
+      - torch.lcm
+      - torch.lerp
+      - torch.less
+      - torch.less_equal
+      - torch.lgamma
+      - torch.linspace
+      - torch.load
+      - torch.log
+      - torch.log10
+      - torch.log1p
+      - torch.log2
+      - torch.logaddexp
+      - torch.logaddexp2
+      - torch.logcumsumexp
+      - torch.logical_and
+      - torch.logical_not
+      - torch.logical_or
+      - torch.logical_xor
+      - torch.logit
+      - torch.logspace
+      - torch.logsumexp
+      - torch.manual_seed
+      - torch.masked_select
+      - torch.matmul
+      - torch.max
+      - torch.maximum
+      - torch.mean
+      - torch.median
+      - torch.meshgrid
+      - torch.min
+      - torch.minimum
+      - torch.mm
+      - torch.mode
+      - torch.moveaxis
+      - torch.movedim
+      - torch.msort
+      - torch.mul
+      - torch.multinomial
+      - torch.multiply
+      - torch.mv
+      - torch.mvlgamma
+      - torch.nanmedian
+      - torch.nanquantile
+      - torch.nansum
+      - torch.nan_to_num
+      - torch.narrow
+      - torch.ne
+      - torch.neg
+      - torch.negative
+      - torch.nextafter
+      - torch.no_grad
+      - torch.nonzero
+      - torch.norm
+      - torch.normal
+      - torch.not_equal
+      - torch.ones
+      - torch.ones_like
+      - torch.ormqr
+      - torch.outer
+      - torch.pinverse
+      - torch.polar
+      - torch.pow
+      - torch.prod
+      - torch.promote_types
+      - torch.qr
+      - torch.quantile
+      - torch.rad2deg
+      - torch.rand
+      - torch.randint
+      - torch.randint_like
+      - torch.rand_like
+      - torch.randn
+      - torch.randn_like
+      - torch.randperm
+      - torch.range
+      - torch.ravel
+      - torch.real
+      - torch.reciprocal
+      - torch.remainder
+      - torch.renorm
+      # - torch.Repeat
+      - torch.repeat_interleave
+      - torch.reshape
+      - torch.result_type
+      - torch.roll
+      - torch.rot90
+      - torch.round
+      - torch.row_stack
+      - torch.rsqrt
+      # - torch.save    # cannot serialize '_io.BufferedRandom' object
+      - torch.scatter
+      - torch.scatter_add
+      - torch.searchsorted
+      - torch.set_grad_enabled
+      - torch.set_num_interop_threads
+      - torch.set_num_threads
+      - torch.set_rng_state
+      - torch.sgn
+      - torch.sigmoid
+      - torch.sign
+      - torch.signbit
+      - torch.sin
+      - torch.sinc
+      - torch.sinh
+      - torch.sort
+      - torch.split
+      - torch.sqrt
+      - torch.square
+      - torch.squeeze
+      - torch.stack
+      - torch.std
+      - torch.std_mean
+      - torch.sub
+      - torch.subtract
+      - torch.sum
+      - torch.swapaxes
+      - torch.swapdims
+      - torch.t
+      # - torch.Take
+      - torch.tan
+      - torch.tanh
+      - torch.tensor
+      - torch.tensordot
+      - torch.tensor_split
+      - torch.topk
+      - torch.trace
+      - torch.transpose
+      - torch.tril
+      - torch.tril_indices
+      - torch.triu
+      - torch.triu_indices
+      - torch.true_divide
+      - torch.trunc
+      - torch.unbind
+      - torch.unique
+      - torch.unique_consecutive
+      - torch.unsqueeze
+      - torch.use_deterministic_algorithms
+      - torch.var
+      - torch.var_mean
+      - torch.view_as_complex
+      - torch.view_as_real
+      - torch.vstack
+      - torch.where
+      - torch.xlogy
+      - torch.zeros
+      - torch.zeros_like
+
+    torch.nn.modules.lazy:
+      - torch.nn.modules.lazy.LazyModuleMixin
+
+    # TODO : need to import torch.nn.utils.prune first
+    # torch.nn.utils.prune:
+    #   - torch.nn.utils.prune.PruningContainer
+    #   - torch.nn.utils.prune.L1Unstructured
+    #   - torch.nn.utils.prune.RandomStructured
+    #   - torch.nn.utils.prune.LnStructured
+    #   - torch.nn.utils.prune.CustomFromMask
+    #   - torch.nn.utils.prune.random_unstructured
+    #   - torch.nn.utils.prune.l1_unstructured
+    #   - torch.nn.utils.prune.ln_structured
+    #   - torch.nn.utils.prune.global_unstructured
+    #   - torch.nn.utils.prune.remove
+    #   - torch.nn.utils.prune.is_pruned
+
+    torch.nn.utils.rnn:
+      - torch.nn.utils.rnn.PackedSequence
+      - torch.nn.utils.rnn.pack_padded_sequence
+      - torch.nn.utils.rnn.pad_packed_sequence
+      - torch.nn.utils.rnn.pad_sequence
+      - torch.nn.utils.rnn.pack_sequence
+
+    torch.nn:
+      - torch.nn.Conv1d
+      - torch.nn.Conv2d
+      - torch.nn.Conv3d
+      - torch.nn.ConvTranspose1d
+      - torch.nn.ConvTranspose2d
+      - torch.nn.ConvTranspose3d
+      - torch.nn.LazyConv1d
+      - torch.nn.LazyConv2d
+      - torch.nn.LazyConv3d
+      - torch.nn.LazyConvTranspose1d
+      - torch.nn.LazyConvTranspose2d
+      - torch.nn.LazyConvTranspose3d
+      - torch.nn.Unfold
+      - torch.nn.Fold
+      - torch.nn.MaxPool1d
+      - torch.nn.MaxPool2d
+      - torch.nn.MaxPool3d
+      - torch.nn.MaxUnpool1d
+      - torch.nn.MaxUnpool2d
+      - torch.nn.MaxUnpool3d
+      - torch.nn.AvgPool1d
+      - torch.nn.AvgPool2d
+      - torch.nn.AvgPool3d
+      - torch.nn.ReflectionPad1d
+      - torch.nn.ReflectionPad2d
+      - torch.nn.ELU
+      - torch.nn.Hardshrink
+      - torch.nn.Hardsigmoid
+      - torch.nn.Hardtanh
+      - torch.nn.Hardswish
+      - torch.nn.LeakyReLU
+      - torch.nn.LogSigmoid
+      - torch.nn.MultiheadAttention
+      - torch.nn.PReLU
+      - torch.nn.ReLU
+      - torch.nn.RReLU
+      - torch.nn.SELU
+      - torch.nn.Sigmoid
+      - torch.nn.Softplus
+      - torch.nn.Softshrink
+      - torch.nn.Tanh
+      - torch.nn.Threshold
+      - torch.nn.AdaptiveLogSoftmaxWithLoss
+      - torch.nn.BatchNorm1d
+      - torch.nn.BatchNorm2d
+      - torch.nn.BatchNorm3d
+      - torch.nn.GroupNorm
+      - torch.nn.SyncBatchNorm
+      - torch.nn.InstanceNorm1d
+      - torch.nn.InstanceNorm2d
+      - torch.nn.InstanceNorm3d
+      - torch.nn.LayerNorm
+      - torch.nn.RNN
+      - torch.nn.LSTM
+      - torch.nn.GRU
+      - torch.nn.RNNCell
+      - torch.nn.LSTMCell
+      - torch.nn.GRUCell
+      - torch.nn.TransformerEncoder
+      - torch.nn.TransformerDecoder
+      - torch.nn.TransformerEncoderLayer
+      - torch.nn.TransformerDecoderLayer
+      - torch.nn.Linear
+      - torch.nn.LazyLinear
+      - torch.nn.Dropout
+      - torch.nn.Dropout2d
+      - torch.nn.Dropout3d
+      - torch.nn.AlphaDropout
+      - torch.nn.Embedding
+      - torch.nn.EmbeddingBag
+      - torch.nn.L1Loss
+      - torch.nn.MSELoss
+      - torch.nn.CrossEntropyLoss
+      - torch.nn.KLDivLoss
+      - torch.nn.BCELoss
+      - torch.nn.BCEWithLogitsLoss
+      - torch.nn.MultiLabelMarginLoss
+      - torch.nn.SmoothL1Loss
+      - torch.nn.SoftMarginLoss
+      - torch.nn.MultiMarginLoss
+      - torch.nn.TripletMarginLoss
+      - torch.nn.TripletMarginWithDistanceLoss
+      - torch.nn.PixelShuffle
+      - torch.nn.PixelUnshuffle
+      - torch.nn.Upsample
+      - torch.nn.DataParallel
+      # - torch.nn.clip_grad_norm_
+      # - torch.nn.clip_grad_value_
+      # - torch.nn.weight_norm
+      # - torch.nn.remove_weight_norm
+      # - torch.nn.spectral_norm
+      # - torch.nn.remove_spectral_norm
+      - torch.nn.Flatten
+      - torch.nn.Unflatten
+
+    torch.nn.functional:
+      - torch.nn.functional.conv1d
+      - torch.nn.functional.conv2d
+      - torch.nn.functional.conv3d
+      - torch.nn.functional.conv_transpose1d
+      - torch.nn.functional.conv_transpose2d
+      - torch.nn.functional.conv_transpose3d
+      - torch.nn.functional.unfold
+      - torch.nn.functional.fold
+      - torch.nn.functional.avg_pool1d
+      - torch.nn.functional.avg_pool2d
+      - torch.nn.functional.avg_pool3d
+      - torch.nn.functional.max_pool1d
+      - torch.nn.functional.max_pool2d
+      - torch.nn.functional.max_pool3d
+      - torch.nn.functional.max_unpool1d
+      - torch.nn.functional.max_unpool2d
+      - torch.nn.functional.max_unpool3d
+      - torch.nn.functional.lp_pool1d
+      - torch.nn.functional.lp_pool2d
+      - torch.nn.functional.adaptive_max_pool1d
+      - torch.nn.functional.adaptive_max_pool2d
+      - torch.nn.functional.adaptive_max_pool3d
+      - torch.nn.functional.adaptive_avg_pool1d
+      - torch.nn.functional.adaptive_avg_pool2d
+      - torch.nn.functional.adaptive_avg_pool3d
+      - torch.nn.functional.threshold
+      - torch.nn.functional.relu
+      - torch.nn.functional.hardtanh
+      - torch.nn.functional.hardswish
+      - torch.nn.functional.relu6
+      - torch.nn.functional.elu
+      - torch.nn.functional.elu_
+      - torch.nn.functional.selu
+      - torch.nn.functional.celu
+      - torch.nn.functional.leaky_relu
+      - torch.nn.functional.leaky_relu_
+      - torch.nn.functional.prelu
+      - torch.nn.functional.rrelu
+      - torch.nn.functional.rrelu_
+      - torch.nn.functional.glu
+      - torch.nn.functional.gelu
+      - torch.nn.functional.logsigmoid
+      - torch.nn.functional.hardshrink
+      - torch.nn.functional.tanhshrink
+      - torch.nn.functional.softplus
+      - torch.nn.functional.softmin
+      - torch.nn.functional.softmax
+      - torch.nn.functional.softshrink
+      - torch.nn.functional.gumbel_softmax
+      - torch.nn.functional.log_softmax
+      - torch.nn.functional.tanh
+      - torch.nn.functional.sigmoid
+      - torch.nn.functional.hardsigmoid
+      - torch.nn.functional.silu
+      - torch.nn.functional.normalize
+      - torch.nn.functional.linear
+      - torch.nn.functional.dropout
+      - torch.nn.functional.embedding
+      - torch.nn.functional.embedding_bag
+      - torch.nn.functional.one_hot
+      - torch.nn.functional.binary_cross_entropy
+      - torch.nn.functional.binary_cross_entropy_with_logits
+      - torch.nn.functional.poisson_nll_loss
+      - torch.nn.functional.cosine_embedding_loss
+      - torch.nn.functional.cross_entropy
+      - torch.nn.functional.ctc_loss
+      - torch.nn.functional.hinge_embedding_loss
+      - torch.nn.functional.kl_div
+      - torch.nn.functional.l1_loss
+      - torch.nn.functional.mse_loss
+      - torch.nn.functional.margin_ranking_loss
+      - torch.nn.functional.multilabel_margin_loss
+      - torch.nn.functional.multilabel_soft_margin_loss
+      - torch.nn.functional.multi_margin_loss
+      - torch.nn.functional.nll_loss
+      - torch.nn.functional.smooth_l1_loss
+      - torch.nn.functional.soft_margin_loss
+      - torch.nn.functional.triplet_margin_loss
+      - torch.nn.functional.triplet_margin_with_distance_loss
+      - torch.nn.functional.pad
+      - torch.nn.functional.interpolate
+      - torch.nn.functional.grid_sample
+      - torch.nn.functional.affine_grid
+
+    torch.Tensor:
+      - torch.Tensor.abs
+      - torch.Tensor.abs_
+      - torch.Tensor.absolute
+      - torch.Tensor.absolute_
+      - torch.Tensor.acos
+      - torch.Tensor.acos_
+      - torch.Tensor.arccos
+      - torch.Tensor.arccos_
+      - torch.Tensor.add
+      - torch.Tensor.add_
+      - torch.Tensor.addbmm
+      - torch.Tensor.addbmm_
+      - torch.Tensor.addcdiv
+      - torch.Tensor.addcdiv_
+      - torch.Tensor.addcmul
+      - torch.Tensor.addcmul_
+      - torch.Tensor.addmm
+      - torch.Tensor.addmm_
+      - torch.Tensor.sspaddmm
+      - torch.Tensor.addmv
+      - torch.Tensor.addmv_
+      - torch.Tensor.addr
+      - torch.Tensor.addr_
+      - torch.Tensor.allclose
+      - torch.Tensor.amax
+      - torch.Tensor.amin
+      - torch.Tensor.angle
+      - torch.Tensor.argmax
+      - torch.Tensor.argmin
+      - torch.Tensor.argsort
+      - torch.Tensor.asin
+      - torch.Tensor.asin_
+      - torch.Tensor.arcsin
+      - torch.Tensor.arcsin_
+      - torch.Tensor.atan
+      - torch.Tensor.atan_
+      - torch.Tensor.arctan
+      - torch.Tensor.arctan_
+      - torch.Tensor.atan2
+      - torch.Tensor.atan2_
+      - torch.Tensor.all
+      - torch.Tensor.any
+      - torch.Tensor.backward
+      - torch.Tensor.baddbmm
+      - torch.Tensor.baddbmm_
+      - torch.Tensor.bernoulli
+      - torch.Tensor.bernoulli_
+      - torch.Tensor.bincount
+      - torch.Tensor.bitwise_not
+      - torch.Tensor.bitwise_not_
+      - torch.Tensor.bitwise_and
+      - torch.Tensor.bitwise_and_
+      - torch.Tensor.bitwise_or
+      - torch.Tensor.bitwise_or_
+      - torch.Tensor.bitwise_xor
+      - torch.Tensor.bitwise_xor_
+      - torch.Tensor.bmm
+      - torch.Tensor.bool
+      - torch.Tensor.byte
+      - torch.Tensor.broadcast_to
+      - torch.Tensor.cauchy_
+      - torch.Tensor.ceil
+      - torch.Tensor.ceil_
+      - torch.Tensor.char
+      - torch.Tensor.cholesky
+      - torch.Tensor.cholesky_inverse
+      - torch.Tensor.cholesky_solve
+      - torch.Tensor.chunk
+      - torch.Tensor.clamp
+      - torch.Tensor.clamp_
+      - torch.Tensor.clip
+      - torch.Tensor.clip_
+      - torch.Tensor.clone
+      - torch.Tensor.copy_
+      - torch.Tensor.conj
+      - torch.Tensor.copysign
+      - torch.Tensor.copysign_
+      - torch.Tensor.cos
+      - torch.Tensor.cos_
+      - torch.Tensor.cosh
+      - torch.Tensor.cosh_
+      - torch.Tensor.count_nonzero
+      - torch.Tensor.acosh
+      - torch.Tensor.acosh_
+      - torch.Tensor.acosh
+      - torch.Tensor.acosh_
+      - torch.Tensor.cpu
+      - torch.Tensor.cross
+      - torch.Tensor.cuda
+      - torch.Tensor.logcumsumexp
+      - torch.Tensor.cummax
+      - torch.Tensor.cummin
+      - torch.Tensor.cumprod
+      - torch.Tensor.cumprod_
+      - torch.Tensor.cumsum
+      - torch.Tensor.cumsum_
+      - torch.Tensor.data_ptr
+      - torch.Tensor.deg2rad
+      - torch.Tensor.dequantize
+      - torch.Tensor.diag
+      - torch.Tensor.diag_embed
+      - torch.Tensor.diagflat
+      - torch.Tensor.diagonal
+      - torch.Tensor.fill_diagonal_
+      - torch.Tensor.diff
+      - torch.Tensor.digamma
+      - torch.Tensor.digamma_
+      - torch.Tensor.dim
+      - torch.Tensor.dist
+      - torch.Tensor.div
+      - torch.Tensor.div_
+      - torch.Tensor.divide
+      - torch.Tensor.divide_
+      - torch.Tensor.dot
+      - torch.Tensor.eig
+      - torch.Tensor.element_size
+      - torch.Tensor.eq
+      - torch.Tensor.eq_
+      - torch.Tensor.equal
+      - torch.Tensor.erf
+      - torch.Tensor.erf_
+      - torch.Tensor.erfc
+      - torch.Tensor.erfc_
+      - torch.Tensor.erfinv
+      - torch.Tensor.erfinv_
+      - torch.Tensor.exp
+      - torch.Tensor.exp_
+      - torch.Tensor.expm1
+      - torch.Tensor.expm1_
+      - torch.Tensor.expand
+      - torch.Tensor.expand_as
+      - torch.Tensor.exponential_
+      - torch.Tensor.fix
+      - torch.Tensor.fix_
+      - torch.Tensor.fill_
+      - torch.Tensor.flatten
+      - torch.Tensor.flip
+      - torch.Tensor.fliplr
+      - torch.Tensor.flipud
+      - torch.Tensor.float
+      - torch.Tensor.float_power
+      - torch.Tensor.float_power_
+      - torch.Tensor.floor
+      - torch.Tensor.floor_
+      - torch.Tensor.floor_divide
+      - torch.Tensor.floor_divide_
+      - torch.Tensor.fmod
+      - torch.Tensor.fmod_
+      - torch.Tensor.frac
+      - torch.Tensor.frac_
+      - torch.Tensor.gather
+      - torch.Tensor.gcd
+      - torch.Tensor.gcd_
+      - torch.Tensor.ge
+      - torch.Tensor.ge_
+      - torch.Tensor.greater_equal
+      - torch.Tensor.greater_equal_
+      - torch.Tensor.geometric_
+      - torch.Tensor.geqrf
+      - torch.Tensor.gt
+      - torch.Tensor.gt_
+      - torch.Tensor.greater
+      - torch.Tensor.greater_
+      - torch.Tensor.half
+      - torch.Tensor.hardshrink
+      - torch.Tensor.heaviside
+      - torch.Tensor.histc
+      - torch.Tensor.hypot
+      - torch.Tensor.hypot_
+      - torch.Tensor.index_add_
+      - torch.Tensor.index_add
+      - torch.Tensor.index_copy_
+      - torch.Tensor.index_copy
+      - torch.Tensor.index_fill_
+      - torch.Tensor.index_fill
+      - torch.Tensor.index_put_
+      - torch.Tensor.index_put
+      - torch.Tensor.index_select
+      - torch.Tensor.int
+      - torch.Tensor.int_repr
+      - torch.Tensor.isclose
+      - torch.Tensor.isfinite
+      - torch.Tensor.isinf
+      - torch.Tensor.isposinf
+      - torch.Tensor.isneginf
+      - torch.Tensor.isnan
+      - torch.Tensor.is_set_to
+      - torch.Tensor.is_signed
+      - torch.Tensor.isreal
+      - torch.Tensor.item
+      - torch.Tensor.kthvalue
+      - torch.Tensor.lcm
+      - torch.Tensor.lcm_
+      - torch.Tensor.le
+      - torch.Tensor.le_
+      - torch.Tensor.less_equal
+      - torch.Tensor.less_equal_
+      - torch.Tensor.lerp
+      - torch.Tensor.lerp_
+      - torch.Tensor.lgamma
+      - torch.Tensor.lgamma_
+      - torch.Tensor.log
+      - torch.Tensor.log_
+      - torch.Tensor.logdet
+      - torch.Tensor.log10
+      - torch.Tensor.log10_
+      - torch.Tensor.log1p
+      - torch.Tensor.log1p_
+      - torch.Tensor.log2
+      - torch.Tensor.log2_
+      - torch.Tensor.logaddexp
+      - torch.Tensor.logaddexp2
+      - torch.Tensor.logsumexp
+      - torch.Tensor.logical_and
+      - torch.Tensor.logical_and_
+      - torch.Tensor.logical_not
+      - torch.Tensor.logical_not_
+      - torch.Tensor.logical_or
+      - torch.Tensor.logical_or_
+      - torch.Tensor.logical_xor
+      - torch.Tensor.logical_xor_
+      - torch.Tensor.logit
+      - torch.Tensor.logit_
+      - torch.Tensor.long
+      - torch.Tensor.lt
+      - torch.Tensor.lt_
+      - torch.Tensor.lt
+      - torch.Tensor.less_
+      - torch.Tensor.map_
+      # - torch.Tensor.def
+      # - torch.Tensor.callable
+      - torch.Tensor.masked_fill
+      - torch.Tensor.masked_select
+      - torch.Tensor.matmul
+      - torch.Tensor.max
+      - torch.Tensor.maximum
+      - torch.Tensor.mean
+      - torch.Tensor.median
+      - torch.Tensor.nanmedian
+      - torch.Tensor.min
+      - torch.Tensor.minimum
+      - torch.Tensor.mm
+      - torch.Tensor.mode
+      - torch.Tensor.movedim
+      - torch.Tensor.moveaxis
+      - torch.Tensor.msort
+      - torch.Tensor.mul
+      - torch.Tensor.mul_
+      - torch.Tensor.multiply
+      - torch.Tensor.multiply_
+      - torch.Tensor.multinomial
+      - torch.Tensor.mv
+      - torch.Tensor.mvlgamma
+      - torch.Tensor.mvlgamma_
+      - torch.Tensor.nansum
+      - torch.Tensor.narrow
+      - torch.Tensor.narrow_copy
+      - torch.Tensor.ndimension
+      - torch.Tensor.nan_to_num
+      - torch.Tensor.nan_to_num_
+      - torch.Tensor.ne
+      - torch.Tensor.ne_
+      - torch.Tensor.not_equal
+      - torch.Tensor.not_equal_
+      - torch.Tensor.neg
+      - torch.Tensor.neg_
+      - torch.Tensor.negative
+      - torch.Tensor.negative_
+      - torch.Tensor.nelement
+      - torch.Tensor.nextafter
+      - torch.Tensor.nextafter_
+      - torch.Tensor.nonzero
+      - torch.Tensor.norm
+      - torch.Tensor.normal_
+      - torch.Tensor.ormqr
+      - torch.Tensor.outer
+      - torch.Tensor.permute
+      - torch.Tensor.pin_memory
+      - torch.Tensor.pinverse
+      - torch.Tensor.pow
+      - torch.Tensor.pow_
+      - torch.Tensor.prod
+      - torch.Tensor.put_
+      - torch.Tensor.quantile
+      - torch.Tensor.nanquantile
+      - torch.Tensor.q_scale
+      - torch.Tensor.q_zero_point
+      - torch.Tensor.q_per_channel_scales
+      - torch.Tensor.q_per_channel_zero_points
+      - torch.Tensor.q_per_channel_axis
+      - torch.Tensor.rad2deg
+      - torch.Tensor.random_
+      - torch.Tensor.ravel
+      - torch.Tensor.reciprocal
+      - torch.Tensor.reciprocal_
+      - torch.Tensor.record_stream
+      - torch.Tensor.register_hook
+      # - torch.Tensor.hook
+      - torch.Tensor.remainder
+      - torch.Tensor.remainder_
+      - torch.Tensor.renorm
+      - torch.Tensor.renorm_
+      - torch.Tensor.repeat
+      - torch.Tensor.repeat_interleave
+      - torch.Tensor.requires_grad_
+      - torch.Tensor.reshape
+      - torch.Tensor.reshape_as
+      - torch.Tensor.resize_
+      - torch.Tensor.resize_as_
+      - torch.Tensor.roll
+      - torch.Tensor.rot90
+      - torch.Tensor.round
+      - torch.Tensor.round_
+      - torch.Tensor.rsqrt
+      - torch.Tensor.rsqrt_
+      - torch.Tensor.scatter
+      - torch.Tensor.scatter_
+      - torch.Tensor.scatter_add
+      - torch.Tensor.select
+      - torch.Tensor.set_
+      - torch.Tensor.short
+      - torch.Tensor.sigmoid
+      - torch.Tensor.sigmoid_
+      - torch.Tensor.sign
+      - torch.Tensor.sign_
+      - torch.Tensor.signbit
+      - torch.Tensor.sgn
+      - torch.Tensor.sgn_
+      - torch.Tensor.sin
+      - torch.Tensor.sin_
+      - torch.Tensor.sinc
+      - torch.Tensor.sinc_
+      - torch.Tensor.sinh
+      - torch.Tensor.sinh_
+      - torch.Tensor.asinh
+      - torch.Tensor.asinh_
+      - torch.Tensor.arcsinh
+      - torch.Tensor.arcsinh_
+      # - torch.Tensor.size
+      - torch.Tensor.solve
+      - torch.Tensor.sqrt
+      - torch.Tensor.sqrt_
+      - torch.Tensor.square
+      - torch.Tensor.square_
+      - torch.Tensor.squeeze
+      - torch.Tensor.squeeze_
+      # - torch.Tensor.storage
+      # - torch.Tensor.storage_offset
+      # - torch.Tensor.storage_type
+      - torch.Tensor.stride
+      - torch.Tensor.sub
+      - torch.Tensor.sub_
+      - torch.Tensor.subtract
+      - torch.Tensor.subtract_
+      - torch.Tensor.sum
+      - torch.Tensor.sum_to_size
+      - torch.Tensor.svd
+      - torch.Tensor.swapaxes
+      - torch.Tensor.swapdims
+      - torch.Tensor.t
+      - torch.Tensor.t_
+      - torch.Tensor.tensor_split
+      - torch.Tensor.tile
+      - torch.Tensor.to
+      - torch.Tensor.to
+      - torch.Tensor.to
+      - torch.Tensor.take
+      - torch.Tensor.tan
+      - torch.Tensor.tan_
+      - torch.Tensor.tanh
+      - torch.Tensor.tanh_
+      - torch.Tensor.atanh
+      - torch.Tensor.atanh_
+      - torch.Tensor.arctanh
+      - torch.Tensor.arctanh_
+      - torch.Tensor.tolist
+      - torch.Tensor.trace
+      - torch.Tensor.transpose
+      - torch.Tensor.transpose_
+      - torch.Tensor.tril
+      - torch.Tensor.tril_
+      - torch.Tensor.triu
+      - torch.Tensor.triu_
+      - torch.Tensor.true_divide
+      - torch.Tensor.true_divide_
+      - torch.Tensor.trunc
+      - torch.Tensor.trunc_
+      - torch.Tensor.type_as
+      - torch.Tensor.unfold
+      - torch.Tensor.uniform_
+      - torch.Tensor.unsqueeze
+      - torch.Tensor.unsqueeze_
+      - torch.Tensor.values
+      - torch.Tensor.var
+      - torch.Tensor.vdot
+      - torch.Tensor.view
+      - torch.Tensor.view
+      - torch.Tensor.view_as
+      - torch.Tensor.where
+      - torch.Tensor.xlogy
+      - torch.Tensor.xlogy_
+      - torch.Tensor.zero_
+
+    torch.autograd:
+      - torch.autograd.backward
+      - torch.autograd.grad
+      - torch.autograd.functional.jacobian
+      - torch.autograd.functional.hessian
+      - torch.autograd.functional.vjp
+      - torch.autograd.functional.jvp
+      - torch.autograd.functional.vhp
+      - torch.autograd.functional.hvp
+      - torch.autograd.torch.Tensor
+      # - torch.autograd.retain_grad
+      - torch.autograd.Function
+      - torch.autograd.function._ContextMethodMixin
+      # - torch.autograd.mark_dirty
+      # - torch.autograd.mark_non_differentiable
+      # - torch.autograd.save_for_backward
+      # - torch.autograd.set_materialize_grads
+      - torch.autograd.profiler.profile
+      # - torch.autograd.use_cuda
+      # - torch.autograd.record_shapes
+      # - torch.autograd.with_flops
+      # - torch.autograd.profile_memory
+      # - torch.autograd.with_stack
+      # - torch.autograd.use_cpu
+      # - torch.autograd.export_chrome_trace
+      # - torch.autograd.key_averages
+      # - torch.autograd.detect_anomaly
+
+    torch.cuda:
+      - torch.cuda.current_device
+      - torch.cuda.current_stream
+      - torch.cuda.default_stream
+      - torch.cuda.device
+      - torch.cuda.device_count
+      - torch.cuda.get_device_capability
+      - torch.cuda.get_device_name
+      - torch.cuda.get_device_properties
+      - torch.cuda.is_available
+      - torch.cuda.set_device
+      - torch.cuda.stream
+      - torch.cuda.synchronize
+      - torch.cuda.get_rng_state_all
+      - torch.cuda.set_rng_state_all
+      - torch.cuda.manual_seed
+      - torch.cuda.initial_seed
+      - torch.cuda.Stream
+      # - torch.cuda.query
+      # - torch.cuda.record_event
+      - torch.cuda.synchronize
+      # - torch.cuda.wait_event
+      # - torch.cuda.wait_stream
+      - torch.cuda.Event
+      # - torch.cuda.elapsed_time
+      # - torch.cuda.record
+      # - torch.cuda.wait
+      - torch.cuda.empty_cache
+      - torch.cuda.memory_stats
+      - torch.cuda.memory_allocated
+      - torch.cuda.max_memory_allocated
+      - torch.cuda.memory_reserved
+      - torch.cuda.max_memory_reserved
+      - torch.cuda.set_per_process_memory_fraction
+      - torch.cuda.max_memory_cached
+
+    # TODO : need to import torch.cuda.comm first
+    # torch.cuda.comm:
+    #   - torch.cuda.comm.broadcast
+    #   - torch.cuda.comm.broadcast_coalesced
+    #   - torch.cuda.comm.reduce_add
+    #   - torch.cuda.comm.scatter
+    #   - torch.cuda.comm.gather
+
+    torch.backends:
+      - torch.backends.cudnn.is_available
+      - torch.backends.mkl.is_available
+      - torch.backends.mkldnn.is_available
+      - torch.backends.openmp.is_available
+
+    torch.futures:
+      - torch.futures.Future
+      - torch.futures.collect_all
+      - torch.futures.wait_all
+
+    # TODO : need to import torch.fx first
+    # torch.fx:
+    #   - torch.fx.symbolic_trace
+    #   - torch.fx.wrap
+    #   - torch.fx.GraphModule
+    #   - torch.fx.Graph
+    #   - torch.fx.Node
+    #   - torch.fx.Tracer
+    #   - torch.fx.Proxy
+    #   - torch.fx.Interpreter
+    #   - torch.fx.Transformer
+
+    torch.overrides:
+      - torch.overrides.get_overridable_functions
+      - torch.overrides.handle_torch_function
+      - torch.overrides.has_torch_function
+      - torch.overrides.is_tensor_method_or_property
+      - torch.overrides.wrap_torch_function
+
+    # no need to hook
+    # torch.profiler:
+    #   - torch.profiler.profile
+    #   - torch.profiler.schedule
+    #   - torch.profiler.tensorboard_trace_handler
+
+    torch.nn.init:
+      - torch.nn.init.calculate_gain
+      - torch.nn.init.uniform_
+      - torch.nn.init.normal_
+      - torch.nn.init.constant_
+      - torch.nn.init.ones_
+      - torch.nn.init.zeros_
+      - torch.nn.init.eye_
+      - torch.nn.init.dirac_
+      - torch.nn.init.xavier_uniform_
+      - torch.nn.init.xavier_normal_
+      # - torch.nn.init.kaiming_uniform_ # cannot serialize '_io.BufferedRandom' object
+      - torch.nn.init.kaiming_normal_
+      - torch.nn.init.orthogonal_
+
+    torch.optim:
+      - torch.optim.Adadelta
+      - torch.optim.Adam
+      - torch.optim.SGD
+      - torch.optim.lr_scheduler.LambdaLR
+      - torch.optim.lr_scheduler.MultiplicativeLR
+      - torch.optim.lr_scheduler.StepLR
+      - torch.optim.lr_scheduler.MultiStepLR
+      - torch.optim.lr_scheduler.ExponentialLR
+      - torch.optim.lr_scheduler.CosineAnnealingLR
+      - torch.optim.lr_scheduler.ReduceLROnPlateau
+      - torch.optim.lr_scheduler.CyclicLR
+      - torch.optim.lr_scheduler.OneCycleLR
+      - torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+
+    torch.random:
+      - torch.random.fork_rng
+      - torch.random.initial_seed
+      - torch.random.manual_seed
+
+    # torch.Storage:
+    # - torch.Storage.fill_
+    # - torch.Storage.float
+    # - torch.Storage.from_buffer
+    # - torch.Storage.from_file
+    # - torch.Storage.get_device
+    # - torch.Storage.half
+    # - torch.Storage.int
+    # - torch.Storage.is_cuda
+    # - torch.Storage.is_pinned
+    # - torch.Storage.is_shared
+    # - torch.Storage.is_sparse
+    # - torch.Storage.long
+    # - torch.Storage.new
+    # - torch.Storage.pin_memory
+    # - torch.Storage.resize_
+    # - torch.Storage.share_memory_
+    # - torch.Storage.short
+    # - torch.Storage.size
+    # - torch.Storage.tolist
+    # - torch.Storage.type
+
+    # TODO : need to import torch.utils.benchmark first
+    # torch.utils.benchmark:
+    #   - torch.utils.benchmark.Timer
+    #   - torch.utils.benchmark.Measurement
+    #   - torch.utils.benchmark.CallgrindStats
+    #   - torch.utils.benchmark.FunctionCounts
+
+    # TODO : need to import torch.utils.checkpoint first
+    # torch.utils.checkpoint:
+    #   - torch.utils.checkpoint.checkpoint
+    #   - torch.utils.checkpoint.checkpoint_sequential
+
+    # TODO : need to import torch.utils.cpp_extension first
+    # torch.utils.cpp_extension:
+    #   - torch.utils.cpp_extension.CppExtension
+    #   - torch.utils.cpp_extension.CUDAExtension
+    #   - torch.utils.cpp_extension.BuildExtension
+    #   - torch.utils.cpp_extension.load
+    #   - torch.utils.cpp_extension.load_inline
+    #   - torch.utils.cpp_extension.include_paths
+    #   - torch.utils.cpp_extension.check_compiler_abi_compatibility
+
+    torch.utils.data:
+      - torch.utils.data.DataLoader
+      - torch.utils.data.Dataset
+      - torch.utils.data.IterableDataset
+      - torch.utils.data.TensorDataset
+      - torch.utils.data.ConcatDataset
+      - torch.utils.data.ChainDataset
+      - torch.utils.data.BufferedShuffleDataset
+      - torch.utils.data.get_worker_info
+      - torch.utils.data.random_split
+      - torch.utils.data.Sampler
+      - torch.utils.data.SequentialSampler
+      - torch.utils.data.RandomSampler
+      - torch.utils.data.SubsetRandomSampler
+      - torch.utils.data.WeightedRandomSampler
+      - torch.utils.data.BatchSampler
+      - torch.utils.data.distributed.DistributedSampler
+
+    # TODO : need to import torch.view first
+    # torch.view:
+    #   - torch.view.as_strided
+    #   - torch.view.detach
+    #   - torch.view.diagonal
+    #   - torch.view.expand
+    #   - torch.view.expand_as
+    #   - torch.view.movedim
+    #   - torch.view.narrow
+    #   - torch.view.permute
+    #   - torch.view.select
+    #   - torch.view.squeeze
+    #   - torch.view.transpose
+    #   - torch.view.t
+    #   - torch.view.T
+    #   - torch.view.real
+    #   - torch.view.imag
+    #   - torch.view.view_as_real
+    #   - torch.view.view_as_imag
+    #   - torch.view.unflatten
+    #   - torch.view.unfold
+    #   - torch.view.unsqueeze
+    #   - torch.view.view
+    #   - torch.view.view_as
+    #   - torch.view.unbind
+    #   - torch.view.split
+    #   - torch.view.split_with_sizes
+    #   - torch.view.swapaxes
+    #   - torch.view.swapdims
+    #   - torch.view.chunk
+    #   - torch.view.indices
+    #   - torch.view.values

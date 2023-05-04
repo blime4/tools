@@ -1,0 +1,5 @@
+1. Suspicious operator network construction
+    1.1 BatchNorm
+2. Tracer + Comparer
+    2.1 trace.trace(without epoch and step)
+    

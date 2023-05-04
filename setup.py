@@ -29,6 +29,7 @@ setup(
         'hooktools':[
             "config/*.yaml",
             "config/*.yml",
+            "model/*",
         ]
     },
     license='BSD-3',

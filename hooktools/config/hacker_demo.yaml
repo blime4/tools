@@ -1,5 +1,0 @@
-# hacker configuration demo
-
-hacker_options :
-  supported_apis_yaml : "supported_apis.yaml"
-  verbose : True
