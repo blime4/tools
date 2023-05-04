@@ -4,6 +4,9 @@
 log_dir: "./tmp"
 comparer_name: "comparer_demo"
 
+compare_non_nn_module : false   # Not yet developed
+compare_nn_module : true
+
 # compare configuration
 # compare mode:
 # 0 : compare directory
@@ -12,9 +15,7 @@ comparer_name: "comparer_demo"
 compare_mode: 2
 
 # file_type :
-# pkl : pickle file       | deprecated
-# pb  : protobuf file     | deprecated
-# pt  : pt file           | recommendation
+# pt  : pt file
 file_type: "pt"
 
 
@@ -43,8 +44,8 @@ compare_directory_options:
 
 # ------- compare filelist
 compare_filelist_options :
-  compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683186022"
-  compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683186181"
+  compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683203399"
+  compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683203402"
 verbose: false
 
 compare_by_order : true

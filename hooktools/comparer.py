@@ -16,9 +16,12 @@ class Comparer(object):
         self.comparer_name = config.get('comparer_name', "")
         self.compare_mode = config.get('compare_mode', 0)
         self.file_type = config.get('file_type', 'pt')
+        self.compare_non_nn_module = config.get('compare_non_nn_module', False)
+        self.compare_nn_module = config.get('compare_nn_module', False)
         # compare mode:
         # 0 : compare directory
-        # 1 : compare protobuf file
+        # 1 : compare file
+        # 2 : compare filelist
         self.evaluator = Evaluator(config)
 
         if self.compare_mode == 0:
@@ -52,11 +55,14 @@ class Comparer(object):
 
         elif self.compare_mode == 2:
             compare_options = config.get('compare_filelist_options', {})
-            self.compared_filelist_1 = compare_options.get("compared_filelist_1")
-            self.compared_filelist_2 = compare_options.get("compared_filelist_2")
+            self.compared_filelist_1 = compare_options.get(
+                "compared_filelist_1")
+            self.compared_filelist_2 = compare_options.get(
+                "compared_filelist_2")
 
         self.compare_by_order = config.get("compare_by_order", False)
-        self.compare_both_file = not self.compare_by_order or config.get("compare_both_file", False)
+        self.compare_both_file = not self.compare_by_order or config.get(
+            "compare_both_file", False)
         self.verbose = compare_options.get('verbose', False)
         if self.verbose:
             print(config)
@@ -69,8 +75,10 @@ class Comparer(object):
         elif self.compare_mode == 1:
             self.compare_file()
         elif self.compare_mode == 2:
-            filelist_1 = get_file_list(path=self.compared_filelist_1, endswith=self.file_type)
-            filelist_2 = get_file_list(path=self.compared_filelist_2, endswith=self.file_type)
+            filelist_1 = get_file_list(
+                path=self.compared_filelist_1, endswith=self.file_type)
+            filelist_2 = get_file_list(
+                path=self.compared_filelist_2, endswith=self.file_type)
             self.compare_filelist(filelist_1, filelist_2)
 
     def compare_directory(self):
@@ -96,8 +104,10 @@ class Comparer(object):
                 step_path_1 = os.path.join(epoch_path_1, step)
                 step_path_2 = os.path.join(epoch_path_2, step)
 
-                filelist_1 = get_file_list(path=step_path_1, endswith=self.file_type)
-                filelist_2 = get_file_list(path=step_path_2, endswith=self.file_type)
+                filelist_1 = get_file_list(
+                    path=step_path_1, endswith=self.file_type)
+                filelist_2 = get_file_list(
+                    path=step_path_2, endswith=self.file_type)
                 self.compare_filelist(filelist_1, filelist_2)
 
     def compare_filelist(self, filelist_1, filelist_2):
@@ -115,8 +125,9 @@ class Comparer(object):
             file_path_1 = self.compared_file_1
             file_path_2 = self.compared_file_2
         if self.file_type == "pt":
-            print("file_path_1 ", file_path_1)
-            print("file_path_2 ", file_path_2)
+            if self.verbose:
+                print("file_path_1 ", file_path_1)
+                print("file_path_2 ", file_path_2)
             self.compare_pt_file(file_path_1, file_path_2)
 
     def compare_pt_file(self, file_path_1, file_path_2):
@@ -127,7 +138,6 @@ class Comparer(object):
             f2.seek(0)
             pt_data_2 = torch.load(f2)
         print(self.evaluator.evalute(pt_data_1, pt_data_2))
-
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -159,6 +169,7 @@ class Comparer(object):
 
         return both_file_list_1, both_file_list_2
 
+
 class MetricData(object):
 
     def __init__(self):
@@ -167,6 +178,7 @@ class MetricData(object):
 
     def __repr__(self) -> str:
         return f"input: {self.input} , output: {self.output}"
+
 
 class Evaluator(object):
 
@@ -179,9 +191,11 @@ class Evaluator(object):
         if "MSE" in self.evaluation_metrics:
             self.register_evaluation("MSE", self.evaluate_mean_squared_error)
         if "RMSE" in self.evaluation_metrics:
-            self.register_evaluation("RMSE", self.evaluate_root_mean_squared_error)
+            self.register_evaluation(
+                "RMSE", self.evaluate_root_mean_squared_error)
         if "MAPE" in self.evaluation_metrics:
-            self.register_evaluation("MAPE", self.evaluate_mean_absolute_percentage_error)
+            self.register_evaluation(
+                "MAPE", self.evaluate_mean_absolute_percentage_error)
 
     def register_evaluation(self, fn_name, evaluation_fn):
         self.registered_evaluations[fn_name] = evaluation_fn
@@ -212,22 +226,26 @@ class Evaluator(object):
             metric = MetricData()
             for input_1, input_2 in zip(data_1.input, data_2.input):
                 if isinstance(input_1, torch.Tensor):
-                    cos = _get_tensor_cosine_similarity(input_1, input_2, data_1, data_2)
+                    cos = _get_tensor_cosine_similarity(
+                        input_1, input_2, data_1, data_2)
                     metric.input.append(cos)
                 elif isinstance(input_1, list):
                     cos_list = []
                     for inp1, inp2 in zip(input_1, input_2):
-                        cos_list.append(_get_tensor_cosine_similarity(inp1, inp2, data_1, data_2))
+                        cos_list.append(_get_tensor_cosine_similarity(
+                            inp1, inp2, data_1, data_2))
                     metric.input.append(cos_list)
                 else:
                     print("Invalid input type : ", type(input_1))
             if isinstance(data_1.output, torch.Tensor):
-                cos = _get_tensor_cosine_similarity(data_1.output, data_2.output, data_1, data_2)
+                cos = _get_tensor_cosine_similarity(
+                    data_1.output, data_2.output, data_1, data_2)
                 metric.output.append(cos)
             elif isinstance(data_1.output, list) or isinstance(data_1.output, tuple):
                 cos_list = []
                 for out_1, out_2 in zip(data_1.output, data_2.output):
-                    cos_list.append(_get_tensor_cosine_similarity(out_1, out_2, data_1, data_2))
+                    cos_list.append(_get_tensor_cosine_similarity(
+                        out_1, out_2, data_1, data_2))
                 metric.output.append(cos_list)
             else:
                 print("Invalid output type : ", type(data_1.output))
@@ -247,7 +265,10 @@ class Evaluator(object):
         pass
 
     def evalute(self, data_1, data_2):
-        metrics = {}
-        for fn_name, evaluation_fn in self.registered_evaluations.items():
-            metrics[fn_name] = evaluation_fn(data_1, data_2)
-        return metrics
+        # TODO: Development of non-nn module comparison
+        if data_1.classify == "nn.module":
+            metrics = {}
+            for fn_name, evaluation_fn in self.registered_evaluations.items():
+                metrics[fn_name] = evaluation_fn(data_1, data_2)
+            return metrics
+        return None
