@@ -9,7 +9,7 @@ comparer_name: "comparer_demo"
 # 0 : compare directory
 # 1 : compare file
 # 2 : compare filelist
-compare_mode: 0
+compare_mode: 2
 
 # file_type :
 # pkl : pickle file       | deprecated
@@ -33,8 +33,8 @@ compare_directory_options:
   only_compare_backward: false
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1681120339/"
-  compared_directory_2: "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1681120374/"
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683186022"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683186181"
 
 # ------- compare file
 # compare_file_options :
@@ -43,8 +43,8 @@ compare_directory_options:
 
 # ------- compare filelist
 compare_filelist_options :
-  compared_filelist_1 : "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1675422052/epoch0/step0"
-  compared_filelist_2 : "/LocalRun/shaobo.xie/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1675422052/epoch0/step1"
+  compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683186022"
+  compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683186181"
 verbose: false
 
 compare_by_order : true

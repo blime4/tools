@@ -28,13 +28,21 @@ class PickleHookData(object):
 
 class NewHookData(object):
 
-    def __init__(self, module, input, output):
+    def __init__(self, module, input, output, classify=None, timestamp=None, tag=None):
         self.module_name = str(module)
+        self.classify = str(classify)
+        self.timestamp = timestamp
+        self.tag = str(tag)
         self.input = input
         self.output = output
 
     def __repr__(self) -> str:
-        return f"module_name : {self.module_name}, input.type : {type(self.input)}, output.type : {type(self.output)},"
+        return f"module_name : {self.module_name},  \
+                 classify    : {self.classify}      \
+                 input.type  : {type(self.input)},  \
+                 output.type : {type(self.output)}, \
+                 timestamp   ：{self.timestamp},    \
+                 tag         : {self.tag}           "
 
 class TracerBase(object):
 

@@ -1,5 +1,24 @@
 1. Suspicious operator network construction
-    1.1 BatchNorm
+    1.1 BatchNorm [40%]
+        1.1.0 nv and nv compare
+        1.1.1 nv and dl compare
 2. Tracer + Comparer
     2.1 trace.trace(without epoch and step)
-    
+    2.2 env change epoch and step [optional]
+    2.3 flag nn.module and non nn.module
+        2.3.1 module_name
+        2.3.2 classify
+        2.3.3 input
+        2.3.4 output
+        2.4.5 timestamp
+        2.4.6 tag
+
+3. Shower
+
+
+4. Bugs
+    4.1 find out why appear None.tensor
+
+
+5. Remove
+    5.1 remove all unsupport function
