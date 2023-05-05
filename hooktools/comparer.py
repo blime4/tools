@@ -1,5 +1,5 @@
 import os
-from hooktools.utils import handle_config, get_file_list
+from hooktools.utils import handle_config, get_file_list, convert_to_numpy
 from tqdm import tqdm
 import torch
 import torch.nn as nn

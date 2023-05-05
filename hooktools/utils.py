@@ -51,3 +51,13 @@ def is_non_nn_module(module):
     if hasattr(module, "is_non_nn_module"):
         return True
     return False
+
+def convert_to_numpy(data):
+    if type(data) in (int, float):
+        return np.array(data)
+    elif type(data) == torch.Tensor:
+        return data.data.cpu().numpy()
+    elif type(data) in (list, tuple):
+        return [convert_to_numpy(d) for d in data]
+    else:
+        raise TypeError(f"Unsupported data type : {type(data)}")
