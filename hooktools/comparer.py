@@ -186,6 +186,8 @@ class Evaluator(object):
         config = handle_config(config)
         self.evaluation_metrics = config.get('evaluation_metrics', [])
         self.registered_evaluations = dict()
+        if "AE" in self.evaluation_metrics:
+            self.register_evaluation("AE", self.evaluate_absolute_error)
         if "CS" in self.evaluation_metrics:
             self.register_evaluation("CS", self.evaluate_cosine_similarity)
         if "MSE" in self.evaluation_metrics:
@@ -201,8 +203,6 @@ class Evaluator(object):
         self.registered_evaluations[fn_name] = evaluation_fn
 
     def evaluate_cosine_similarity(self, data_1, data_2):
-        # module_name : Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False), input.type : <class 'tuple'>, output.type : <class 'torch.Tensor'>
-
         def _get_tensor_cosine_similarity(tensor_1, tensor_2, data_1, data_2):
             try:
                 tensor_1 = tensor_1.reshape(1, -1)
@@ -221,7 +221,6 @@ class Evaluator(object):
                 tensor_2 = tensor_2[:, :min_len]
                 cos = nn.CosineSimilarity(dim=1, eps=1e-6)
                 return cos(tensor_1, tensor_2).tolist()
-
         def _get_struct_cosine_similarity(data_1, data_2):
             metric = MetricData()
             for input_1, input_2 in zip(data_1.input, data_2.input):
@@ -264,9 +263,16 @@ class Evaluator(object):
     def evaluate_mean_absolute_percentage_error(self, data_1, data_2):
         pass
 
+    def evaluate_absolute_error(self, data_1, data_2):
+        pass
+
     def evalute(self, data_1, data_2):
         # TODO: Development of non-nn module comparison
         if data_1.classify == "nn.module":
+            if data_1.module_name == data_2.module_name:
+                print("module_name: ", data_1.module_name)
+            else:
+                print("module_name: data_1 :", data_1.module_name, "\tdata_2 : ", data_2.module_name)
             metrics = {}
             for fn_name, evaluation_fn in self.registered_evaluations.items():
                 metrics[fn_name] = evaluation_fn(data_1, data_2)
