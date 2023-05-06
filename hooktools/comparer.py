@@ -1,5 +1,6 @@
 import os
-from hooktools.utils import handle_config, get_file_list, convert_to_numpy
+from hooktools.utils import handle_config, get_file_list, convert_to_numpy, calculate_absolute_error
+import numpy as np
 from tqdm import tqdm
 import torch
 import torch.nn as nn
@@ -264,7 +265,14 @@ class Evaluator(object):
         pass
 
     def evaluate_absolute_error(self, data_1, data_2):
-        pass
+        np_data1 = convert_to_numpy(data_1)
+        np_data2 = convert_to_numpy(data_2)
+        return calculate_absolute_error(np_data1, np_data2)
+
+        # print("np_data1 : ", np_data1)
+        # print("np_data2 : ", np_data2)
+        # absolute_error = np.abs(np_data1, np_data2)
+        # return absolute_error
 
     def evalute(self, data_1, data_2):
         # TODO: Development of non-nn module comparison

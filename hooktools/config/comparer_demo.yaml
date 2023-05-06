@@ -53,7 +53,7 @@ compare_by_order : true
 # evaluator configuration
 evaluation_metrics:
   - "AE"          # absolute error
-  - "CS"          # cosine similarity
+  # - "CS"          # cosine similarity
   # - "MSE"       # mean squared error
   # - "RMSE"      # root mean squared error
   # - "MAPE"      # mean absolute percentage error

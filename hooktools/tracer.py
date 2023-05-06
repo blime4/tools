@@ -2,28 +2,8 @@ import torch
 import os
 import time
 import json
-from hooktools.utils import handle_config, is_non_nn_module
+from hooktools.utils import handle_config, is_non_nn_module, NewHookData
 from hooktools.hacker import Hacker
-
-
-class NewHookData(object):
-
-    def __init__(self, module, input, output, classify="", timestamp="", tag=""):
-        self.module_name = str(module)
-        self.classify = str(classify)
-        self.timestamp = str(timestamp)
-        self.tag = str(tag)
-        self.input = input
-        self.output = output
-
-    def __repr__(self) -> str:
-        return f"module_name    \t: {self.module_name},     \
-                \nclassify      \t: {self.classify},        \
-                \ninput.type    \t: {type(self.input)},     \
-                \noutput.type   \t: {type(self.output)},    \
-                \ntimestamp     \t: {self.timestamp},       \
-                \ntag           \t: {self.tag}"
-
 
 class TracerBase(object):
 

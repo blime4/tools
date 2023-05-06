@@ -8,6 +8,8 @@ import numpy as np  # type: ignore
 import os
 import yaml
 from pathlib import Path
+import torch
+import inspect
 
 def check_suffix(file="demo.yaml", suffix=('.yaml,'), msg=''):
     # Check file(s) for acceptable suffix
@@ -52,6 +54,24 @@ def is_non_nn_module(module):
         return True
     return False
 
+class NewHookData(object):
+
+    def __init__(self, module, input, output, classify="", timestamp="", tag=""):
+        self.module_name = str(module)
+        self.classify = str(classify)
+        self.timestamp = str(timestamp)
+        self.tag = str(tag)
+        self.input = input
+        self.output = output
+
+    def __repr__(self) -> str:
+        return f"module_name    \t: {self.module_name},     \
+                \nclassify      \t: {self.classify},        \
+                \ninput.type    \t: {type(self.input)},     \
+                \noutput.type   \t: {type(self.output)},    \
+                \ntimestamp     \t: {self.timestamp},       \
+                \ntag           \t: {self.tag}"
+
 def convert_to_numpy(data):
     if type(data) in (int, float):
         return np.array(data)
@@ -59,5 +79,17 @@ def convert_to_numpy(data):
         return data.data.cpu().numpy()
     elif type(data) in (list, tuple):
         return [convert_to_numpy(d) for d in data]
+    elif isinstance(data, NewHookData) :
+        # TODO: check if have input output
+        return [convert_to_numpy(data.input), convert_to_numpy(data.output)]
     else:
         raise TypeError(f"Unsupported data type : {type(data)}")
+
+def calculate_absolute_error(data1, data2):
+    if isinstance(data1, (list, tuple)):
+        return [calculate_absolute_error(d1, d2) for d1, d2 in zip(data1, data2)]
+    error = np.abs(data1 - data2)
+    if isinstance(error, np.ndarray):
+        return [calculate_absolute_error(d1, d2) for d1, d2 in zip(data1, data2)]
+    else:
+        return error
