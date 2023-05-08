@@ -1,5 +1,6 @@
 import os
-from hooktools.utils import handle_config, get_file_list, convert_to_numpy, calculate_absolute_error
+from hooktools.utils import handle_config, get_file_list
+from hooktools.utils import NewHookData
 import numpy as np
 from tqdm import tqdm
 import torch
@@ -138,7 +139,7 @@ class Comparer(object):
         with open(file_path_2, "rb") as f2:
             f2.seek(0)
             pt_data_2 = torch.load(f2)
-        print(self.evaluator.evalute(pt_data_1, pt_data_2))
+        self.evaluator.evalute(pt_data_1, pt_data_2)
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -264,25 +265,54 @@ class Evaluator(object):
     def evaluate_mean_absolute_percentage_error(self, data_1, data_2):
         pass
 
-    def evaluate_absolute_error(self, data_1, data_2):
-        np_data1 = convert_to_numpy(data_1)
-        np_data2 = convert_to_numpy(data_2)
-        return calculate_absolute_error(np_data1, np_data2)
 
-        # print("np_data1 : ", np_data1)
-        # print("np_data2 : ", np_data2)
-        # absolute_error = np.abs(np_data1, np_data2)
-        # return absolute_error
+    def evaluate_absolute_error(self, data_1, data_2):
+        # siyi way
+        def compare(actual, desired, prefix=""):
+            if isinstance(actual, (list, tuple)):
+                if actual:
+                    for idx in range(len(actual)):
+                        try:
+                            compare(actual[idx], desired[idx], prefix=prefix+f"{idx}")
+                        except Exception as e:
+                            print("ERROR : ", e)
+                            raise prefix + "failed"
+            elif isinstance(actual, torch.Tensor) and isinstance(desired, torch.Tensor):
+                try:
+                    l1_error = (actual - desired).float().abs().mean()
+                    rel_error = l1_error / (actual.abs().float().mean())
+                    print(prefix, 'l1_error: ', l1_error, 'rel_error', rel_error)
+                    if l1_error * rel_error > 10 :
+                        print('\n###\n',prefix, 'should checked!','\n###\n')
+
+                except Exception as e:
+                    print("ERROR : ", e)
+                    raise prefix + "failed."
+
+            elif isinstance(actual, NewHookData) :
+                print("\ninput:")
+                compare(actual.input, desired.input)
+                print("\noutput:")
+                compare(desired.output ,desired.output)
+
+            elif isinstance(actual, (int, float, bool)):
+                print("actual : ", actual, "desired : ", desired, "abs(actual - desired)", abs(actual-desired))
+                return
+            elif isinstance(actual, str):
+                print(f"str : {actual}, {desired}")
+            else:
+                raise TypeError(f"Unsupported data type : {type(actual)}")
+
+        return compare(data_1, data_2)
 
     def evalute(self, data_1, data_2):
         # TODO: Development of non-nn module comparison
-        if data_1.classify == "nn.module":
-            if data_1.module_name == data_2.module_name:
-                print("module_name: ", data_1.module_name)
-            else:
-                print("module_name: data_1 :", data_1.module_name, "\tdata_2 : ", data_2.module_name)
-            metrics = {}
-            for fn_name, evaluation_fn in self.registered_evaluations.items():
-                metrics[fn_name] = evaluation_fn(data_1, data_2)
-            return metrics
-        return None
+        # if data_1.classify == "nn.module":
+        if data_1.module_name == data_2.module_name:
+            print("module_name: ", data_1.module_name)
+        else:
+            print("module_name: data_1 :", data_1.module_name, "\tdata_2 : ", data_2.module_name)
+        metrics = {}
+        for fn_name, evaluation_fn in self.registered_evaluations.items():
+            metrics[fn_name] = evaluation_fn(data_1, data_2)
+        return metrics

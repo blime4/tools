@@ -71,25 +71,3 @@ class NewHookData(object):
                 \noutput.type   \t: {type(self.output)},    \
                 \ntimestamp     \t: {self.timestamp},       \
                 \ntag           \t: {self.tag}"
-
-def convert_to_numpy(data):
-    if type(data) in (int, float):
-        return np.array(data)
-    elif type(data) == torch.Tensor:
-        return data.data.cpu().numpy()
-    elif type(data) in (list, tuple):
-        return [convert_to_numpy(d) for d in data]
-    elif isinstance(data, NewHookData) :
-        # TODO: check if have input output
-        return [convert_to_numpy(data.input), convert_to_numpy(data.output)]
-    else:
-        raise TypeError(f"Unsupported data type : {type(data)}")
-
-def calculate_absolute_error(data1, data2):
-    if isinstance(data1, (list, tuple)):
-        return [calculate_absolute_error(d1, d2) for d1, d2 in zip(data1, data2)]
-    error = np.abs(data1 - data2)
-    if isinstance(error, np.ndarray):
-        return [calculate_absolute_error(d1, d2) for d1, d2 in zip(data1, data2)]
-    else:
-        return error
