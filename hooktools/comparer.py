@@ -187,7 +187,11 @@ class Evaluator(object):
     def __init__(self, config):
         config = handle_config(config)
         self.evaluation_metrics = config.get('evaluation_metrics', [])
+
         self.verbose = 'verbose' in self.evaluation_metrics
+        self.skip_nn_module = 'skip_nn_module' in self.evaluation_metrics
+        self.skip_non_nn_module = 'skip_non_nn_module' in self.evaluation_metrics
+
         self.registered_evaluations = dict()
         if "L1" in self.evaluation_metrics:
             self.register_evaluation("l1", self.evaluate_l1_loss)
@@ -253,7 +257,7 @@ class Evaluator(object):
             else:
                 print("Invalid output type : ", type(data_1.output))
             return metric
-        return _get_struct_cosine_similarity(data_1, data_2)
+        print(_get_struct_cosine_similarity(data_1, data_2))
 
     def evaluate_mean_squared_error(self, data_1, data_2):
         data_1 = data_1.reshape(1, -1)
@@ -292,10 +296,12 @@ class Evaluator(object):
                     print("ERROR : ", e)
                     raise prefix + "failed."
             elif isinstance(actual, NewHookData):
-                print("\ninput:")
+                print("↓"*30)
+                print("input:")
                 compare(actual.input, desired.input)
-                print("\noutput:")
+                print("output:")
                 compare(actual.output, desired.output)
+                print("↑"*30)
             # non nn.module function's data's type have : int, float, bool, str
             elif isinstance(actual, (int, float, bool)):
                 if(actual != desired or self.verbose):
@@ -309,6 +315,11 @@ class Evaluator(object):
         return compare(data_1, data_2)
 
     def evalute(self, data_1, data_2):
+        if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
+            return
+        if self.skip_non_nn_module and data_1.classify == "non nn.module" and data_2.classify == "non nn.module":
+            return
+
         if data_1.module_name == data_2.module_name:
             print("module_name: ", data_1.module_name)
         else:

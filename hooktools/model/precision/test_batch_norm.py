@@ -9,11 +9,11 @@ class BatchNorm1dNet(nn.Module):
     def __init__(self):
         super(BatchNorm1dNet, self).__init__()
         self.fc1 = nn.Linear(10, 20)
-        self.bn1 = nn.BatchNorm1d(20)
+        # self.bn1 = nn.BatchNorm1d(20)
 
     def forward(self, x):
         x = self.fc1(x)
-        x = self.bn1(x)
+        # x = self.bn1(x)
         return x
 
 def test_batchnorm1dnet():

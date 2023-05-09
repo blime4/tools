@@ -58,7 +58,7 @@ class NewHookData(object):
 
     def __init__(self, module, input, output, classify="", timestamp="", tag=""):
         self.module_name = str(module)
-        self.classify = str(classify)
+        self.classify = str(classify)               # "non nn.module" or "nn.module"
         self.timestamp = str(timestamp)
         self.tag = str(tag)
         self.input = input

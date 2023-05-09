@@ -6,6 +6,7 @@
     2.1 trace.trace(without epoch and step)
     2.2 env change epoch and step [optional]
     2.3 temperary only compare nn.module
+    2.4 compare directory optimize
 3. Shower
 4. Bugs
     4.1 find out why appear None.tensor
