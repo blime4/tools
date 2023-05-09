@@ -119,7 +119,7 @@ class Comparer(object):
             for file1, file2 in tqdm(zip(both_file_list_1, both_file_list_2)):
                 self.compare_file(file1, file2)
         elif self.compare_by_order:
-            for file1, file2 in tqdm(zip(filelist_1, filelist_2), desc="file: "):
+            for file1, file2 in tqdm(zip(filelist_1, filelist_2), desc="Processing files...\n"):
                 self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
@@ -187,9 +187,10 @@ class Evaluator(object):
     def __init__(self, config):
         config = handle_config(config)
         self.evaluation_metrics = config.get('evaluation_metrics', [])
+        self.verbose = 'verbose' in self.evaluation_metrics
         self.registered_evaluations = dict()
-        if "AE" in self.evaluation_metrics:
-            self.register_evaluation("AE", self.evaluate_absolute_error)
+        if "L1" in self.evaluation_metrics:
+            self.register_evaluation("l1", self.evaluate_l1_loss)
         if "CS" in self.evaluation_metrics:
             self.register_evaluation("CS", self.evaluate_cosine_similarity)
         if "MSE" in self.evaluation_metrics:
@@ -223,6 +224,7 @@ class Evaluator(object):
                 tensor_2 = tensor_2[:, :min_len]
                 cos = nn.CosineSimilarity(dim=1, eps=1e-6)
                 return cos(tensor_1, tensor_2).tolist()
+
         def _get_struct_cosine_similarity(data_1, data_2):
             metric = MetricData()
             for input_1, input_2 in zip(data_1.input, data_2.input):
@@ -265,15 +267,15 @@ class Evaluator(object):
     def evaluate_mean_absolute_percentage_error(self, data_1, data_2):
         pass
 
-
-    def evaluate_absolute_error(self, data_1, data_2):
+    def evaluate_l1_loss(self, data_1, data_2):
         # siyi way
         def compare(actual, desired, prefix=""):
             if isinstance(actual, (list, tuple)):
                 if actual:
                     for idx in range(len(actual)):
                         try:
-                            compare(actual[idx], desired[idx], prefix=prefix+f"{idx}")
+                            compare(actual[idx], desired[idx],
+                                    prefix=prefix+f"{idx}")
                         except Exception as e:
                             print("ERROR : ", e)
                             raise prefix + "failed"
@@ -281,23 +283,24 @@ class Evaluator(object):
                 try:
                     l1_error = (actual - desired).float().abs().mean()
                     rel_error = l1_error / (actual.abs().float().mean())
-                    print(prefix, 'l1_error: ', l1_error, 'rel_error', rel_error)
-                    if l1_error * rel_error > 10 :
-                        print('\n###\n',prefix, 'should checked!','\n###\n')
+                    print(prefix, 'l1_error: ', l1_error.detach().numpy(),
+                          'rel_error', rel_error.detach().numpy())
+                    if l1_error * rel_error > 10:
+                        print('\n###\n', prefix, 'should checked!', '\n###\n')
 
                 except Exception as e:
                     print("ERROR : ", e)
                     raise prefix + "failed."
-
-            elif isinstance(actual, NewHookData) :
+            elif isinstance(actual, NewHookData):
                 print("\ninput:")
                 compare(actual.input, desired.input)
                 print("\noutput:")
-                compare(desired.output ,desired.output)
-
+                compare(actual.output, desired.output)
+            # non nn.module function's data's type have : int, float, bool, str
             elif isinstance(actual, (int, float, bool)):
-                print("actual : ", actual, "desired : ", desired, "abs(actual - desired)", abs(actual-desired))
-                return
+                if(actual != desired or self.verbose):
+                    print("actual : ", actual, "desired : ", desired,
+                          "abs(actual - desired)", abs(actual-desired))
             elif isinstance(actual, str):
                 print(f"str : {actual}, {desired}")
             else:
@@ -306,12 +309,12 @@ class Evaluator(object):
         return compare(data_1, data_2)
 
     def evalute(self, data_1, data_2):
-        # TODO: Development of non-nn module comparison
-        # if data_1.classify == "nn.module":
         if data_1.module_name == data_2.module_name:
             print("module_name: ", data_1.module_name)
         else:
-            print("module_name: data_1 :", data_1.module_name, "\tdata_2 : ", data_2.module_name)
+            print("module_name: data_1 :", data_1.module_name,
+                  "\tdata_2 : ", data_2.module_name)
+            print('\n###\n should checked! \n###\n')
         metrics = {}
         for fn_name, evaluation_fn in self.registered_evaluations.items():
             metrics[fn_name] = evaluation_fn(data_1, data_2)

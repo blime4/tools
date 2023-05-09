@@ -46,14 +46,17 @@ compare_directory_options:
 compare_filelist_options :
   compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683203399"
   compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683203402"
-verbose: false
+verbose: true
 
 compare_by_order : true
 
 # evaluator configuration
 evaluation_metrics:
-  - "AE"          # absolute error
+  - "L1"          # L1 loss
   # - "CS"          # cosine similarity
   # - "MSE"       # mean squared error
   # - "RMSE"      # root mean squared error
   # - "MAPE"      # mean absolute percentage error
+
+  # configuration
+  # - "verbose"
