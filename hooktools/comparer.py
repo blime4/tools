@@ -172,16 +172,6 @@ class Comparer(object):
         return both_file_list_1, both_file_list_2
 
 
-class MetricData(object):
-
-    def __init__(self):
-        self.input = []
-        self.output = []
-
-    def __repr__(self) -> str:
-        return f"input: {self.input} , output: {self.output}"
-
-
 class Evaluator(object):
 
     def __init__(self, config):
@@ -195,6 +185,8 @@ class Evaluator(object):
         self.registered_evaluations = dict()
         if "L1" in self.evaluation_metrics:
             self.register_evaluation("l1", self.evaluate_l1_loss)
+        if "AE" in self.evaluation_metrics:
+            self.register_evaluation("AE", self.evaluate_absolute_error)
         if "CS" in self.evaluation_metrics:
             self.register_evaluation("CS", self.evaluate_cosine_similarity)
         if "MSE" in self.evaluation_metrics:
@@ -210,54 +202,35 @@ class Evaluator(object):
         self.registered_evaluations[fn_name] = evaluation_fn
 
     def evaluate_cosine_similarity(self, data_1, data_2):
-        def _get_tensor_cosine_similarity(tensor_1, tensor_2, data_1, data_2):
-            try:
-                tensor_1 = tensor_1.reshape(1, -1)
-                tensor_2 = tensor_2.reshape(1, -1)
-                cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-                return cos(tensor_1, tensor_2).tolist()
-            except:
-                print("data_1 : ", data_1)
-                print("data_2 : ", data_2)
-                print("tensor_1.shape : ", tensor_1.shape)
-                print("tensor_2.shape : ", tensor_2.shape)
-                tensor_1 = tensor_1.reshape(1, -1)
-                tensor_2 = tensor_2.reshape(1, -1)
-                min_len = min(tensor_1.shape[1], tensor_2.shape[1])
-                tensor_1 = tensor_1[:, :min_len]
-                tensor_2 = tensor_2[:, :min_len]
-                cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-                return cos(tensor_1, tensor_2).tolist()
+        def compare(actual, desired, prefix=""):
+            assert type(actual) == type(
+                desired), f"type(actual) is {type(actual)} which is not same with type(desired) : {type(desired)}"
 
-        def _get_struct_cosine_similarity(data_1, data_2):
-            metric = MetricData()
-            for input_1, input_2 in zip(data_1.input, data_2.input):
-                if isinstance(input_1, torch.Tensor):
-                    cos = _get_tensor_cosine_similarity(
-                        input_1, input_2, data_1, data_2)
-                    metric.input.append(cos)
-                elif isinstance(input_1, list):
-                    cos_list = []
-                    for inp1, inp2 in zip(input_1, input_2):
-                        cos_list.append(_get_tensor_cosine_similarity(
-                            inp1, inp2, data_1, data_2))
-                    metric.input.append(cos_list)
-                else:
-                    print("Invalid input type : ", type(input_1))
-            if isinstance(data_1.output, torch.Tensor):
-                cos = _get_tensor_cosine_similarity(
-                    data_1.output, data_2.output, data_1, data_2)
-                metric.output.append(cos)
-            elif isinstance(data_1.output, list) or isinstance(data_1.output, tuple):
-                cos_list = []
-                for out_1, out_2 in zip(data_1.output, data_2.output):
-                    cos_list.append(_get_tensor_cosine_similarity(
-                        out_1, out_2, data_1, data_2))
-                metric.output.append(cos_list)
+            if isinstance(actual, NewHookData):
+                if actual.input is not None:
+                    compare(actual.input, desired.input, prefix+'[input]\t')
+                if actual.output is not None:
+                    compare(actual.output, desired.output, prefix+'[output]\t')
+
+            elif isinstance(actual, torch.Tensor):
+                similarity = torch.nn.functional.cosine_similarity(
+                    actual, desired, dim=0)
+                print(prefix, similarity)
+
+            elif isinstance(actual, (list, tuple)):
+                for idx, (val1, val2) in enumerate(zip(actual, desired)):
+                    compare(val1, val2, prefix+f'{idx}\t')
+
+            elif isinstance(actual, (int, float, bool)):
+                pass
+
+            elif isinstance(actual, str):
+                pass
+
             else:
-                print("Invalid output type : ", type(data_1.output))
-            return metric
-        print(_get_struct_cosine_similarity(data_1, data_2))
+                raise TypeError(f"Unsupported data type : {type(actual)}")
+
+        compare(data_1, data_2)
 
     def evaluate_mean_squared_error(self, data_1, data_2):
         data_1 = data_1.reshape(1, -1)
@@ -314,6 +287,9 @@ class Evaluator(object):
 
         return compare(data_1, data_2)
 
+    def evaluate_absolute_error(self, data_1, data_2):
+        pass
+
     def evalute(self, data_1, data_2):
         if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
             return
@@ -326,7 +302,6 @@ class Evaluator(object):
             print("module_name: data_1 :", data_1.module_name,
                   "\tdata_2 : ", data_2.module_name)
             print('\n###\n should checked! \n###\n')
-        metrics = {}
         for fn_name, evaluation_fn in self.registered_evaluations.items():
-            metrics[fn_name] = evaluation_fn(data_1, data_2)
-        return metrics
+            print(fn_name)
+            evaluation_fn(data_1, data_2)

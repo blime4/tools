@@ -54,7 +54,8 @@ compare_by_order : true
 # evaluator configuration
 evaluation_metrics:
   - "L1"          # L1 loss
-  # - "CS"          # cosine similarity
+  # - "AE"          # absolute error
+  - "CS"          # cosine similarity
   # - "MSE"       # mean squared error
   # - "RMSE"      # root mean squared error
   # - "MAPE"      # mean absolute percentage error
