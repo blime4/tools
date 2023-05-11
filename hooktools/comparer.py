@@ -187,6 +187,8 @@ class Evaluator(object):
             self.register_evaluation("l1", self.evaluate_l1_loss)
         if "AE" in self.evaluation_metrics:
             self.register_evaluation("AE", self.evaluate_absolute_error)
+        if "MAE" in self.evaluation_metrics:
+            self.register_evaluation("MAE", self.evaluate_mean_absolute_error)
         if "CS" in self.evaluation_metrics:
             self.register_evaluation("CS", self.evaluate_cosine_similarity)
         if "MSE" in self.evaluation_metrics:
@@ -201,94 +203,69 @@ class Evaluator(object):
     def register_evaluation(self, fn_name, evaluation_fn):
         self.registered_evaluations[fn_name] = evaluation_fn
 
-    def evaluate_cosine_similarity(self, data_1, data_2):
-        def compare(actual, desired, prefix=""):
-            assert type(actual) == type(
-                desired), f"type(actual) is {type(actual)} which is not same with type(desired) : {type(desired)}"
+    def evaluate_cosine_similarity(self, actual, desired, prefix=""):
+        similarity = torch.nn.functional.cosine_similarity(
+            actual, desired, dim=0)
+        print(prefix, similarity)
 
-            if isinstance(actual, NewHookData):
-                if actual.input is not None:
-                    compare(actual.input, desired.input, prefix+'[input]\t')
-                if actual.output is not None:
-                    compare(actual.output, desired.output, prefix+'[output]\t')
+    def evaluate_mean_squared_error(self, actual, desired, prefix=""):
+        mse = torch.mean((actual - desired) ** 2)
+        print(prefix, mse)
 
-            elif isinstance(actual, torch.Tensor):
-                similarity = torch.nn.functional.cosine_similarity(
-                    actual, desired, dim=0)
-                print(prefix, similarity)
+    def evaluate_root_mean_squared_error(self, actual, desired, prefix=""):
+        rmse = torch.sqrt(torch.mean((actual - desired) ** 2))
+        print(prefix, rmse)
 
-            elif isinstance(actual, (list, tuple)):
-                for idx, (val1, val2) in enumerate(zip(actual, desired)):
-                    compare(val1, val2, prefix+f'{idx}\t')
+    def evaluate_mean_absolute_percentage_error(self, actual, desired, prefix=""):
+        mape = 100 * torch.mean(torch.abs((actual - desired) / actual))
+        print(prefix, mape)
 
-            elif isinstance(actual, (int, float, bool)):
-                pass
+    def evaluate_mean_absolute_error(self, actual, desired, prefix=""):
+        mae = torch.mean(torch.abs(actual - desired))
+        print(prefix, mae)
 
-            elif isinstance(actual, str):
-                pass
+    def evaluate_l1_loss(self, actual, desired, prefix=""):
+        # siyi's way
+        try:
+            l1_error = (actual - desired).float().abs().mean()
+            rel_error = l1_error / (actual.abs().float().mean())
+            print(prefix, 'l1_error: ', l1_error.detach().numpy(),
+                    'rel_error', rel_error.detach().numpy())
+            if l1_error * rel_error > 10:
+                print('\n###\n', prefix, 'should checked!', '\n###\n')
 
-            else:
-                raise TypeError(f"Unsupported data type : {type(actual)}")
+        except Exception as e:
+            print("ERROR : ", e)
+            raise prefix + "failed."
 
-        compare(data_1, data_2)
+    def evaluate_absolute_error(self, actual, desired, prefix=""):
+        absolute_error = torch.abs(actual - desired)
+        print(prefix, absolute_error)
 
-    def evaluate_mean_squared_error(self, data_1, data_2):
-        data_1 = data_1.reshape(1, -1)
-        data_2 = data_2.reshape(1, -1)
-        loss = nn.MSELoss()
-        return loss(data_1, data_2)
+    def evalute_(self, actual, desired, prefix=""):
+        assert type(actual) == type(
+            desired), f"type(actual) is {type(actual)} which is not same with type(desired) : {type(desired)}"
 
-    def evaluate_root_mean_squared_error(self, data_1, data_2):
-        pass
+        if isinstance(actual, NewHookData):
+            if actual.input is not None:
+                self.evalute_(actual.input, desired.input, prefix+'[input]\t')
+            if actual.output is not None:
+                self.evalute_(actual.output, desired.output, prefix+'[output]\t')
 
-    def evaluate_mean_absolute_percentage_error(self, data_1, data_2):
-        pass
+        elif isinstance(actual, torch.Tensor):
+            for fn_name, evaluation_fn in self.registered_evaluations.items():
+                print(fn_name)
+                evaluation_fn(actual, desired, prefix)
 
-    def evaluate_l1_loss(self, data_1, data_2):
-        # siyi way
-        def compare(actual, desired, prefix=""):
-            if isinstance(actual, (list, tuple)):
-                if actual:
-                    for idx in range(len(actual)):
-                        try:
-                            compare(actual[idx], desired[idx],
-                                    prefix=prefix+f"{idx}")
-                        except Exception as e:
-                            print("ERROR : ", e)
-                            raise prefix + "failed"
-            elif isinstance(actual, torch.Tensor) and isinstance(desired, torch.Tensor):
-                try:
-                    l1_error = (actual - desired).float().abs().mean()
-                    rel_error = l1_error / (actual.abs().float().mean())
-                    print(prefix, 'l1_error: ', l1_error.detach().numpy(),
-                          'rel_error', rel_error.detach().numpy())
-                    if l1_error * rel_error > 10:
-                        print('\n###\n', prefix, 'should checked!', '\n###\n')
+        elif isinstance(actual, (list, tuple)):
+            for idx, (val1, val2) in enumerate(zip(actual, desired)):
+                self.evalute_(val1, val2, prefix+f'{idx}\t')
 
-                except Exception as e:
-                    print("ERROR : ", e)
-                    raise prefix + "failed."
-            elif isinstance(actual, NewHookData):
-                print("↓"*30)
-                print("input:")
-                compare(actual.input, desired.input)
-                print("output:")
-                compare(actual.output, desired.output)
-                print("↑"*30)
-            # non nn.module function's data's type have : int, float, bool, str
-            elif isinstance(actual, (int, float, bool)):
-                if(actual != desired or self.verbose):
-                    print("actual : ", actual, "desired : ", desired,
-                          "abs(actual - desired)", abs(actual-desired))
-            elif isinstance(actual, str):
-                print(f"str : {actual}, {desired}")
-            else:
-                raise TypeError(f"Unsupported data type : {type(actual)}")
+        elif isinstance(actual, (int, float, bool, str)):
+            pass
+        else:
+            raise TypeError(f"Unsupported data type : {type(actual)}")
 
-        return compare(data_1, data_2)
-
-    def evaluate_absolute_error(self, data_1, data_2):
-        pass
 
     def evalute(self, data_1, data_2):
         if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
@@ -299,9 +276,8 @@ class Evaluator(object):
         if data_1.module_name == data_2.module_name:
             print("module_name: ", data_1.module_name)
         else:
-            print("module_name: data_1 :", data_1.module_name,
-                  "\tdata_2 : ", data_2.module_name)
+            print("module_name: \ndata_1 :", data_1.module_name,
+                  "\ndata_2 : ", data_2.module_name)
             print('\n###\n should checked! \n###\n')
-        for fn_name, evaluation_fn in self.registered_evaluations.items():
-            print(fn_name)
-            evaluation_fn(data_1, data_2)
+
+        self.evalute_(data_1, data_2)

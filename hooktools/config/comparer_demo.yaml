@@ -53,12 +53,14 @@ compare_by_order : true
 
 # evaluator configuration
 evaluation_metrics:
-  - "L1"          # L1 loss
-  # - "AE"          # absolute error
-  - "CS"          # cosine similarity
-  # - "MSE"       # mean squared error
-  # - "RMSE"      # root mean squared error
-  # - "MAPE"      # mean absolute percentage error
+  # you dont need to use all evaluate methods, use what you need.
+  - "L1"        # L1 loss
+  - "AE"        # absolute error
+  - "CS"        # cosine similarity
+  - "MSE"       # mean squared error
+  - "MAE"       # mean absolute error
+  - "RMSE"      # root mean squared error
+  - "MAPE"      # mean absolute percentage error
 
   # configuration
   - "verbose"                 # if comment out this option, some log will ignore
