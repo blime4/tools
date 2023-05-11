@@ -230,7 +230,7 @@ class Evaluator(object):
             l1_error = (actual - desired).float().abs().mean()
             rel_error = l1_error / (actual.abs().float().mean())
             print(prefix, 'l1_error: ', l1_error.detach().numpy(),
-                    'rel_error', rel_error.detach().numpy())
+                  'rel_error', rel_error.detach().numpy())
             if l1_error * rel_error > 10:
                 print('\n###\n', prefix, 'should checked!', '\n###\n')
 
@@ -250,7 +250,8 @@ class Evaluator(object):
             if actual.input is not None:
                 self.evalute_(actual.input, desired.input, prefix+'[input]\t')
             if actual.output is not None:
-                self.evalute_(actual.output, desired.output, prefix+'[output]\t')
+                self.evalute_(actual.output, desired.output,
+                              prefix+'[output]\t')
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
@@ -262,10 +263,11 @@ class Evaluator(object):
                 self.evalute_(val1, val2, prefix+f'{idx}\t')
 
         elif isinstance(actual, (int, float, bool, str)):
-            pass
+            # non nn.module will have some input, ouput data, which type in (int, float, bool, str)
+            if (actual != desired or self.verbose):
+                print(prefix, "\nactual:\t", actual, "\ndesired:\t", desired)
         else:
             raise TypeError(f"Unsupported data type : {type(actual)}")
-
 
     def evalute(self, data_1, data_2):
         if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
