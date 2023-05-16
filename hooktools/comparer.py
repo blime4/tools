@@ -227,6 +227,8 @@ class Evaluator(object):
     def evaluate_l1_loss(self, actual, desired, prefix=""):
         # siyi's way
         try:
+            actual = actual.cpu() if actual.is_cuda else actual
+            desired = desired.cpu() if desired.is_cuda else desired
             l1_error = (actual - desired).float().abs().mean()
             rel_error = l1_error / (actual.abs().float().mean())
             print(prefix, 'l1_error: ', l1_error.detach().numpy(),
@@ -248,10 +250,10 @@ class Evaluator(object):
 
         if isinstance(actual, NewHookData):
             if actual.input is not None:
-                self.evalute_(actual.input, desired.input, prefix+'[input]\t')
+                self.evalute_(actual.input, desired.input, prefix+'[ input]')
             if actual.output is not None:
                 self.evalute_(actual.output, desired.output,
-                              prefix+'[output]\t')
+                              prefix+'[output]')
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
@@ -260,14 +262,17 @@ class Evaluator(object):
 
         elif isinstance(actual, (list, tuple)):
             for idx, (val1, val2) in enumerate(zip(actual, desired)):
-                self.evalute_(val1, val2, prefix+f'{idx}\t')
+                self.evalute_(val1, val2, prefix+f'[idx-{idx}]\t')
 
         elif isinstance(actual, (int, float, bool, str)):
             # non nn.module will have some input, ouput data, which type in (int, float, bool, str)
             if (actual != desired or self.verbose):
                 print(prefix, "\nactual:\t", actual, "\ndesired:\t", desired)
         else:
-            raise TypeError(f"Unsupported data type : {type(actual)}")
+            if actual == desired and actual is None:
+                pass
+            else:
+                raise TypeError(f"Unsupported data type : {type(actual)}")
 
     def evalute(self, data_1, data_2):
         if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
