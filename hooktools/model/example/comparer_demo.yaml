@@ -1,0 +1,68 @@
+# comparer configuration demo
+
+# log configuration
+log_dir: "./tmp"
+comparer_name: "comparer_demo"
+
+compare_non_nn_module : false   # Not yet developed
+compare_nn_module : true
+
+# compare configuration
+# compare mode:
+# 0 : compare directory
+# 1 : compare file
+# 2 : compare filelist
+compare_mode: 0
+
+# file_type :
+# pt  : pt file
+file_type: "pt"
+
+
+# ------- compare directory
+compare_directory_options:
+  # you can configure which epochs and steps to be compared
+  # if compare_epochs or compare_steps is not set,
+  # default compare all epochs or steps in the compared directory.
+  # compare_epochs:
+  #   - 0
+  #   - 1
+  # compare_steps:
+  #   - 3
+  #   - 4
+  only_compare_forward: false
+  only_compare_backward: false
+  only_compare_input: false
+  only_compare_output: false
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1684226731"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1684226933"
+
+# ------- compare file
+# compare_file_options :
+#   compared_file_1 : "xxxx"
+#   compared_file_2 : "yyyy"
+
+# ------- compare filelist
+compare_filelist_options :
+  compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683625252"    # 41 . nv
+  # compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/45-tmp/tracer_demo_forward_hook_1683623860" # 45 . dl
+  compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683626887" # 45 . dl
+verbose: true
+
+compare_by_order : true
+
+# evaluator configuration
+evaluation_metrics:
+  # you dont need to use all evaluate methods, use what you need.
+  - "L1"        # L1 loss
+  - "AE"        # absolute error
+  - "CS"        # cosine similarity
+  - "MSE"       # mean squared error
+  - "MAE"       # mean absolute error
+  - "RMSE"      # root mean squared error
+  - "MAPE"      # mean absolute percentage error
+
+  # configuration
+  - "verbose"                 # if comment out this option, some log will ignore
+  # - "skip_nn_module"          # "skip nn.module"
+  # - "skip_non_nn_module"      # "skip non nn.module function"
