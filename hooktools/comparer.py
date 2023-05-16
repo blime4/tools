@@ -199,6 +199,7 @@ class Evaluator(object):
         if "MAPE" in self.evaluation_metrics:
             self.register_evaluation(
                 "MAPE", self.evaluate_mean_absolute_percentage_error)
+        self.filter = Filter(config)
 
     def register_evaluation(self, fn_name, evaluation_fn):
         self.registered_evaluations[fn_name] = evaluation_fn
@@ -288,3 +289,15 @@ class Evaluator(object):
             print('\n###\n should checked! \n###\n')
 
         self.evalute_(data_1, data_2)
+
+class Filter(object):
+
+    def __init__(self, config):
+        config = handle_config(config)
+        self.filter_config = config.get('filter', {})
+        if "global_filter" in self.filter_config:
+            setattr(self, "global_filter", self.filter_config["global_filter"])
+
+        for name in ["L1_filter", "AE_filter", "CS_filter", "MSE_filter", "MAE_filter", "RMSE_filter", "MAPE_filter"]:
+            if name in self.filter_config:
+                setattr(self, name, self.filter_config[name])
