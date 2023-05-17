@@ -54,7 +54,7 @@ compare_by_order : true
 # evaluator configuration
 evaluation_metrics:
   # you dont need to use all evaluate methods, use what you need.
-  - "L1"        # L1 loss
+  # - "L1"        # L1 loss
   - "AE"        # absolute error
   - "CS"        # cosine similarity
   - "MSE"       # mean squared error
@@ -66,3 +66,18 @@ evaluation_metrics:
   - "verbose"                 # if comment out this option, some log will ignore
   # - "skip_nn_module"          # "skip nn.module"
   # - "skip_non_nn_module"      # "skip non nn.module function"
+
+show_max_error_only : true
+
+# filter configuration
+filter:
+  # Only errors greater than xxx_filter are displayed.
+  # "global_filter" : 1e-05      # You can set the filters globally, or individually
+  # -----------------------
+  # "L1_filter" : 1e-05
+  "AE_filter" : 1e-05
+  "CS_filter" : 1e-02
+  "MSE_filter"  : 1e-05
+  "MAE_filter"  : 1e-05
+  "RMSE_filter" : 1e-05
+  "MAPE_filter" : 1e-05

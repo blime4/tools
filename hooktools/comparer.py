@@ -204,26 +204,22 @@ class Evaluator(object):
     def register_evaluation(self, fn_name, evaluation_fn):
         self.registered_evaluations[fn_name] = evaluation_fn
 
-    def evaluate_cosine_similarity(self, actual, desired, prefix=""):
-        similarity = torch.nn.functional.cosine_similarity(
+    def evaluate_cosine_similarity(self, actual, desired):
+        return torch.nn.functional.cosine_similarity(
             actual, desired, dim=0)
-        print(prefix, similarity)
 
-    def evaluate_mean_squared_error(self, actual, desired, prefix=""):
-        mse = torch.mean((actual - desired) ** 2)
-        print(prefix, mse)
 
-    def evaluate_root_mean_squared_error(self, actual, desired, prefix=""):
-        rmse = torch.sqrt(torch.mean((actual - desired) ** 2))
-        print(prefix, rmse)
+    def evaluate_mean_squared_error(self, actual, desired):
+        return torch.mean((actual - desired) ** 2)
 
-    def evaluate_mean_absolute_percentage_error(self, actual, desired, prefix=""):
-        mape = 100 * torch.mean(torch.abs((actual - desired) / actual))
-        print(prefix, mape)
+    def evaluate_root_mean_squared_error(self, actual, desired):
+        return torch.sqrt(torch.mean((actual - desired) ** 2))
 
-    def evaluate_mean_absolute_error(self, actual, desired, prefix=""):
-        mae = torch.mean(torch.abs(actual - desired))
-        print(prefix, mae)
+    def evaluate_mean_absolute_percentage_error(self, actual, desired):
+        return 100 * torch.mean(torch.abs((actual - desired) / actual))
+
+    def evaluate_mean_absolute_error(self, actual, desired):
+        return torch.mean(torch.abs(actual - desired))
 
     def evaluate_l1_loss(self, actual, desired, prefix=""):
         # siyi's way
@@ -241,9 +237,9 @@ class Evaluator(object):
             print("ERROR : ", e)
             raise prefix + "failed."
 
-    def evaluate_absolute_error(self, actual, desired, prefix=""):
+    def evaluate_absolute_error(self, actual, desired):
         absolute_error = torch.abs(actual - desired)
-        print(prefix, absolute_error)
+        return absolute_error
 
     def evalute_(self, actual, desired, prefix=""):
         assert type(actual) == type(
@@ -258,8 +254,8 @@ class Evaluator(object):
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
-                print(fn_name)
-                evaluation_fn(actual, desired, prefix)
+                error = evaluation_fn(actual, desired)
+                self.filter.push_data(error, fn_name, prefix)
 
         elif isinstance(actual, (list, tuple)):
             for idx, (val1, val2) in enumerate(zip(actual, desired)):
@@ -295,9 +291,22 @@ class Filter(object):
     def __init__(self, config):
         config = handle_config(config)
         self.filter_config = config.get('filter', {})
+        self.show_max_error_only = config.get("show_max_error_only", False)
         if "global_filter" in self.filter_config:
             setattr(self, "global_filter", self.filter_config["global_filter"])
 
         for name in ["L1_filter", "AE_filter", "CS_filter", "MSE_filter", "MAE_filter", "RMSE_filter", "MAPE_filter"]:
             if name in self.filter_config:
                 setattr(self, name, self.filter_config[name])
+
+    def push_data(self, data=None, fn_name="", prefix=""):
+        attr = "{}_filter".format(fn_name)
+        if hasattr(self, attr):
+            # TODO:Type judgment
+            filter_error = eval(getattr(self, attr))
+            max_data = torch.max(data)
+            if max_data > filter_error:
+                if self.show_max_error_only:
+                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, max_data))
+                else:
+                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, data))
