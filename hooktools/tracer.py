@@ -150,9 +150,9 @@ class DumpPtFileTracer(TracerBase):
             if self.only_output:
                 input = None
             self._set_current_save_path(mode)
-            classify = "non nn.module" if is_non_nn_module(module) else "nn.module"
+
             timestamp = str(int(time.time()))
-            hook_data = NewHookData(module, input, output, classify, timestamp)
+            hook_data = NewHookData(module, input, output, timestamp)
             self._save_pt_data(hook_data, mode=mode)
 
     def _save_pt_data(self, data, mode="Forward"):

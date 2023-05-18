@@ -56,9 +56,12 @@ def is_non_nn_module(module):
 
 class NewHookData(object):
 
-    def __init__(self, module, input, output, classify="", timestamp="", tag=""):
+    def __init__(self, module, input, output, timestamp="", tag=""):
         self.module_name = str(module)
-        self.classify = str(classify)               # "non nn.module" or "nn.module"
+        if is_non_nn_module(module):
+            self.classify = "non nn.module"
+        else:
+            self.classify = "nn.module"
         self.timestamp = str(timestamp)
         self.tag = str(tag)
         self.input = input

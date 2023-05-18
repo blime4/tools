@@ -81,11 +81,12 @@ class HackedNNModule(nn.Module):
     __call__ : Callable[..., Any] = _call_impl
 
 class WrapModule(HackedNNModule):
-    def __init__(self, orig_fn, user_forward_hook, user_backward_hook) -> None:
+    def __init__(self, orig_fn:str, user_forward_hook, user_backward_hook) -> None:
         super().__init__()
-        if isinstance(orig_fn, str):
-            orig_fn = eval(orig_fn)
-        self.orig_fn = orig_fn
+        if not isinstance(orig_fn, str):
+            raise TypeError('Expected a string for orig_fn')
+        self.module_name = orig_fn
+        self.orig_fn = eval(orig_fn)
         self.register_forward_hook(user_forward_hook)
         self.register_backward_hook(user_backward_hook)
         self.is_non_nn_module = True
@@ -97,10 +98,8 @@ class WrapModule(HackedNNModule):
             print("self.orig_fn: ",self.orig_fn.__name__, ", type is : ", type(self.orig_fn))
             return self.orig_fn(*args, **kwargs)
 
-
     def __repr__(self):
-        return str(self.orig_fn.__module__) + '.' + str(self.orig_fn.__name__)
-
+        return self.module_name
 
 class HackerBase(object):
     def __init__(self, config):
@@ -141,6 +140,7 @@ class HackerBase(object):
         if not bw_fn:
             bw_fn = self.default_backward_hook
         for api_class, api_list in apis.items():
+            api_list = set(api_list)
             for api in api_list:
                 if self.is_unsupport_class_type(api):
                     continue
@@ -162,5 +162,3 @@ class Hacker(HackerBase):
 
 # TODO :
 # 1. unhack
-# 2. check why appear None.xxx
-# 3. check return str(self.orig_fn.__module__) + '.' + str(self.orig_fn.__name__)
