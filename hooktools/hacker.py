@@ -157,7 +157,10 @@ class Hacker(HackerBase):
         self.wrap_setattr(self.supported_apis, fw_fn, bw_fn)
 
     def unhack(self):
-        # TODO: unhack
         pass
 
 
+# TODO :
+# 1. unhack
+# 2. check why appear None.xxx
+# 3. check return str(self.orig_fn.__module__) + '.' + str(self.orig_fn.__name__)
