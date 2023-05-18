@@ -154,10 +154,7 @@ class Hacker(HackerBase):
         super().__init__(config)
 
     def hack(self, fw_fn=None, bw_fn=None):
-        self.wrap_supported_apis(self.supported_apis, fw_fn, bw_fn)
-
-    def wrap_supported_apis(self, supported_apis, fw_fn=None, bw_fn=None):
-        self.wrap_setattr(supported_apis, fw_fn, bw_fn)
+        self.wrap_setattr(self.supported_apis, fw_fn, bw_fn)
 
     def unhack(self):
         # TODO: unhack

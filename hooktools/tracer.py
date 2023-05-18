@@ -50,6 +50,7 @@ class TracerBase(object):
             self.has_hacker = True
 
         self.module_name_2_file_path = {}
+        self.is_trace = False
 
     def trace(self, epoch=-1, step=-1):
         """
@@ -129,29 +130,30 @@ class DumpPtFileTracer(TracerBase):
             self.hacker.hack(self.hook_forward_fn, self.hook_backward_fn)
 
     def hook_forward_fn(self, module, input, output):
-        super().hook_forward_fn(module, input, output)
         self._hook_impl(module, input, output, "Forward")
 
     def hook_backward_fn(self, module, grad_input, grad_output):
-        super().hook_backward_fn(module, grad_input, grad_output)
         self._hook_impl(module, grad_input, grad_output, "Backward")
 
     def trace(self, epoch=-1, step=-1):
+        self.is_trace=True
         return super().trace(epoch, step)
 
     def untrace(self):
+        self.is_trace=False
         return super().untrace()
 
     def _hook_impl(self, module, input, output, mode="Forward"):
-        if self.only_input:
-            output = None
-        if self.only_output:
-            input = None
-        self._set_current_save_path(mode)
-        classify = "non nn.module" if is_non_nn_module(module) else "nn.module"
-        timestamp = str(int(time.time()))
-        hook_data = NewHookData(module, input, output, classify, timestamp)
-        self._save_pt_data(hook_data, mode=mode)
+        if self.is_trace:
+            if self.only_input:
+                output = None
+            if self.only_output:
+                input = None
+            self._set_current_save_path(mode)
+            classify = "non nn.module" if is_non_nn_module(module) else "nn.module"
+            timestamp = str(int(time.time()))
+            hook_data = NewHookData(module, input, output, classify, timestamp)
+            self._save_pt_data(hook_data, mode=mode)
 
     def _save_pt_data(self, data, mode="Forward"):
         if mode == "Forward":
