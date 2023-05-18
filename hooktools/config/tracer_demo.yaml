@@ -631,8 +631,6 @@ hacker_options :
       - torch.Tensor.count_nonzero
       - torch.Tensor.acosh
       - torch.Tensor.acosh_
-      - torch.Tensor.acosh
-      - torch.Tensor.acosh_
       - torch.Tensor.cpu
       - torch.Tensor.cross
       - torch.Tensor.cuda
@@ -771,7 +769,6 @@ hacker_options :
       - torch.Tensor.logit
       - torch.Tensor.logit_
       - torch.Tensor.long
-      - torch.Tensor.lt
       - torch.Tensor.lt_
       - torch.Tensor.lt
       - torch.Tensor.less_
@@ -911,8 +908,6 @@ hacker_options :
       - torch.Tensor.tensor_split
       - torch.Tensor.tile
       - torch.Tensor.to
-      - torch.Tensor.to
-      - torch.Tensor.to
       - torch.Tensor.take
       - torch.Tensor.tan
       - torch.Tensor.tan_
@@ -942,7 +937,6 @@ hacker_options :
       - torch.Tensor.values
       - torch.Tensor.var
       - torch.Tensor.vdot
-      - torch.Tensor.view
       - torch.Tensor.view
       - torch.Tensor.view_as
       - torch.Tensor.where
@@ -998,7 +992,6 @@ hacker_options :
       - torch.cuda.Stream
       # - torch.cuda.query
       # - torch.cuda.record_event
-      - torch.cuda.synchronize
       # - torch.cuda.wait_event
       # - torch.cuda.wait_stream
       - torch.cuda.Event
