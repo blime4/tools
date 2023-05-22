@@ -208,7 +208,6 @@ class Evaluator(object):
         return torch.nn.functional.cosine_similarity(
             actual, desired, dim=0)
 
-
     def evaluate_mean_squared_error(self, actual, desired):
         return torch.mean((actual - desired) ** 2)
 
@@ -221,21 +220,20 @@ class Evaluator(object):
     def evaluate_mean_absolute_error(self, actual, desired):
         return torch.mean(torch.abs(actual - desired))
 
-    def evaluate_l1_loss(self, actual, desired, prefix=""):
+    def evaluate_l1_loss(self, actual, desired):
         # siyi's way
         try:
             actual = actual.cpu() if actual.is_cuda else actual
             desired = desired.cpu() if desired.is_cuda else desired
             l1_error = (actual - desired).float().abs().mean()
             rel_error = l1_error / (actual.abs().float().mean())
-            print(prefix, 'l1_error: ', l1_error.detach().numpy(),
-                  'rel_error', rel_error.detach().numpy())
             if l1_error * rel_error > 10:
-                print('\n###\n', prefix, 'should checked!', '\n###\n')
+                print('\n###\n', 'should checked!', '\n###\n')
+            return (l1_error.detach().numpy(), rel_error.detach().numpy())
 
         except Exception as e:
             print("ERROR : ", e)
-            raise prefix + "failed."
+            raise "failed."
 
     def evaluate_absolute_error(self, actual, desired):
         absolute_error = torch.abs(actual - desired)
@@ -299,14 +297,21 @@ class Filter(object):
             if name in self.filter_config:
                 setattr(self, name, self.filter_config[name])
 
-    def push_data(self, data=None, fn_name="", prefix=""):
-        attr = "{}_filter".format(fn_name)
-        if hasattr(self, attr):
-            # TODO:Type judgment
-            filter_error = eval(getattr(self, attr))
-            max_data = torch.max(data)
-            if max_data > filter_error:
-                if self.show_max_error_only:
-                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, max_data))
-                else:
-                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, data))
+    def push_data(self, data=None, fn_name="", prefix="", attr=None):
+        max_data = torch.max(data)
+        if fn_name == "L1":
+            self.push_data(data[0], "l1_error", prefix, attr="L1_filter")
+            self.push_data(data[1], "rel_error", prefix, attr="L1_filter")
+        attr = "{}_filter".format(fn_name) if attr is not None else attr
+        filter_error = eval(getattr(self, attr)) if hasattr(self, attr) else 0
+        if max_data > filter_error:
+            if self.show_max_error_only:
+                print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, max_data))
+            else:
+                print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, data))
+
+
+# TODO:
+# 1. L1
+# 2. conclusion
+# 3. topk

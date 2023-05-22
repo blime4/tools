@@ -12,6 +12,15 @@ tracer_name : "tracer_demo"
   # 3 : "ALLTRACE"
 trace_mode : 3
 
+# trace_granularity
+  # 0 : torch.nn.modules.module
+  # 1 : model.named_modules
+trace_granularity : 0
+# Testing found that torch.nn.modules.module,
+# in a way that provides more information about the hack layer,
+# such as BCEWithLogitsLoss
+
+
 # hook configuration
   # hook trace : (module , input, output)
   # you can choose only input or output

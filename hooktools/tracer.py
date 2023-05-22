@@ -7,7 +7,7 @@ from hooktools.hacker import Hacker
 
 class TracerBase(object):
 
-    def __init__(self, config):
+    def __init__(self, config, model):
         """
         config : yaml type configuration
         """
@@ -51,6 +51,8 @@ class TracerBase(object):
 
         self.module_name_2_file_path = {}
         self.is_trace = False
+        self.trace_granularity = config.get("trace_granularity", 0)
+        self.model = model
 
     def trace(self, epoch=-1, step=-1):
         """
@@ -63,13 +65,19 @@ class TracerBase(object):
         self.epoch = epoch
         self.step = step
 
-        if self.forward_hook:
+        if self.trace_granularity == 0:
             self.forward_handle = torch.nn.modules.module.register_module_forward_hook(
-                self.hook_forward_fn)
-        if self.backward_hook:
+                                    self.hook_forward_fn) if self.forward_hook else None
             # self.backward_handle = torch.nn.modules.module.register_module_full_backward_hook(self.hook_backward_fn) # still have an RuntimeError : Module backward hook for grad_input is called before the grad_output one. This happens because the gradient in your nn.M odule flows to the Module’s input without passing through the Module’s output
             self.backward_handle = torch.nn.modules.module.register_module_backward_hook(
-                self.hook_backward_fn)  # this api will work in torchvision==0.8.2, ==0.9.0
+                                    self.hook_backward_fn)  if self.backward_hook else None
+            # this api will work in torchvision==0.8.2, ==0.9.0
+        elif self.trace_granularity == 1:
+            for name, module in self.model.named_modules():
+                print("trace -> ", name)
+                if module is not None:
+                    self.forward_handle = module.register_forward_hook(self.hook_forward_fn) if self.forward_hook else None
+                    self.backward_handle = module.register_backward_hook(self.hook_backward_fn) if self.backward_hook else None
 
     def untrace(self):
         if self.trace_mode == 0:
@@ -116,8 +124,8 @@ class TracerBase(object):
 
 class DumpPtFileTracer(TracerBase):
 
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, config, model):
+        super().__init__(config, model)
         self.dump_pt_hook_options = config.get(
             'dump_pt_hook_options', {}
         )
@@ -174,7 +182,7 @@ class DumpPtFileTracer(TracerBase):
 
 class Tracer(object):
 
-    def __init__(self, config):
+    def __init__(self, config, model):
         """
         config : yaml type configuration
         """
@@ -186,7 +194,7 @@ class Tracer(object):
         self.untrace_fns = []
 
         if "dump_pt_hook" in self.register_hooks:
-            self.dump_pt_hook = DumpPtFileTracer(config)
+            self.dump_pt_hook = DumpPtFileTracer(config, model)
             self.trace_fns.append(self.dump_pt_hook.trace)
             self.untrace_fns.append(self.dump_pt_hook.untrace)
 
