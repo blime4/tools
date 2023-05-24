@@ -59,8 +59,7 @@ class TracerBase(object):
         epoch : integer number of epoch
         step : integer number of step
         """
-        if self.trace_mode == 0:
-            return
+        if self.trace_mode == 0: return
         print("tracing !!!!, epoch=%d, step=%d" % (epoch, step))
         self.epoch = epoch
         self.step = step
@@ -74,10 +73,20 @@ class TracerBase(object):
             # this api will work in torchvision==0.8.2, ==0.9.0
         elif self.trace_granularity == 1:
             for name, module in self.model.named_modules():
-                print("trace -> ", name)
                 if module is not None:
                     self.forward_handle = module.register_forward_hook(self.hook_forward_fn) if self.forward_hook else None
                     self.backward_handle = module.register_backward_hook(self.hook_backward_fn) if self.backward_hook else None
+
+    def trace_gradient(self, epoch=-1, step=-1):
+        if self.trace_mode == 0: return
+        print("tracing !!!!, epoch=%d, step=%d" % (epoch, step))
+        self.epoch = epoch
+        self.step = step
+        for name, param in self.model.named_parameters():
+            if param is not None:
+                print(f"[name] : {name}")
+                print(f"[epoch-{epoch}][step-{step}][grad] : {param.grad}")
+        pass
 
     def untrace(self):
         if self.trace_mode == 0:
