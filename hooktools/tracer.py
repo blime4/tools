@@ -78,6 +78,21 @@ class TracerBase(object):
                     self.backward_handle = module.register_backward_hook(self.hook_backward_fn) if self.backward_hook else None
 
     def trace_gradient(self, epoch=-1, step=-1):
+        # usage :
+        """_summary_
+
+        Args:
+            epoch (int, optional): _description_. Defaults to -1.
+            step (int, optional): _description_. Defaults to -1.
+
+            example :
+
+                optimizer.step()
+            --> trace.trace_gradient(epoch, step)
+                optimizer.zero_grad()
+
+        """
+
         if self.trace_mode == 0: return
         print("tracing !!!!, epoch=%d, step=%d" % (epoch, step))
         self.epoch = epoch
@@ -212,6 +227,10 @@ class Tracer(object):
     def trace(self, epoch=-1, step=-1):
         for trace_fn in self.trace_fns:
             trace_fn(epoch, step)
+
+    def trace_gradient(self, epoch=-1, step=-1):
+        if self.dump_pt_hook:
+            self.dump_pt_hook.trace_gradient(epoch=epoch, step=step)
 
     def untrace(self):
         try:
