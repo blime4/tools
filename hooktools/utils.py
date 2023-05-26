@@ -8,6 +8,7 @@ import numpy as np  # type: ignore
 import os
 import yaml
 from pathlib import Path
+import time
 import torch
 import inspect
 
@@ -49,28 +50,28 @@ def get_file_list(path, endswith="pt"):
     return [os.path.join(path, pb) for pb in sorted(os.listdir(path)) if pb.endswith(endswith)]
 
 
-def is_non_nn_module(module):
+def get_classify(module):
     if hasattr(module, "is_non_nn_module"):
-        return True
-    return False
+        return "non nn.module"
+    else:
+        return "nn.module"
 
 class NewHookData(object):
 
-    def __init__(self, module, input, output, timestamp="", tag=""):
+    def __init__(self, module, input=None, output=None, tag="", gradient=None):
         self.module_name = str(module)
-        if is_non_nn_module(module):
-            self.classify = "non nn.module"
-        else:
-            self.classify = "nn.module"
-        self.timestamp = str(timestamp)
+        self.classify = get_classify(module) if gradient is None else "gradient"
+        self.timestamp = str(int(time.time()))
         self.tag = str(tag)
         self.input = input
         self.output = output
+        self.gradient = gradient
 
     def __repr__(self) -> str:
         return f"module_name    \t: {self.module_name},     \
                 \nclassify      \t: {self.classify},        \
                 \ninput.type    \t: {type(self.input)},     \
                 \noutput.type   \t: {type(self.output)},    \
+                \ngradient.type \t: {type(self.gradient)},  \
                 \ntimestamp     \t: {self.timestamp},       \
                 \ntag           \t: {self.tag}"

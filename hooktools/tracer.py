@@ -2,7 +2,7 @@ import torch
 import os
 import time
 import json
-from hooktools.utils import handle_config, is_non_nn_module, NewHookData
+from hooktools.utils import handle_config, NewHookData
 from hooktools.hacker import Hacker
 
 class TracerBase(object):
@@ -21,21 +21,19 @@ class TracerBase(object):
         # 1 : "FORWARD"
         # 2 : "BACKWARD"
         # 3 : "ALLTRACE"
-        self.only_input = config.get('only_input', False)
-        self.only_output = config.get('only_output', False)
-        self.timestamp = str(int(time.time()))
+
         self.forward_hook = self.trace_mode == 1 or self.trace_mode == 3
         self.backward_hook = self.trace_mode == 2 or self.trace_mode == 3
 
-        if self.forward_hook:
-            self.forward_log_path = os.path.join(
-                self.log_dir, self.tracer_name + "_forward_hook_"+self.timestamp)
-            print("save directory :  forward_log_path : ", self.forward_log_path)
-        if self.backward_hook:
-            self.backward_log_path = os.path.join(
-                self.log_dir, self.tracer_name + "_backward_hook_"+self.timestamp)
-            print("save directory :  backward_log_path : ",
-                  self.backward_log_path)
+        self.timestamp = str(int(time.time()))
+        self.save_path=os.path.join(self.log_dir, self.tracer_name+"_"+self.timestamp)
+        self.forward_path = os.path.join(self.save_path, "forward")
+        self.backward_path = os.path.join(self.save_path, "backward")
+        self.gradient_path = os.path.join(self.save_path, "gradient")
+
+        self.save_forward_number = 0
+        self.save_backward_number = 0
+        self.save_gradient_number = 0
 
         self.epoch = -1
         self.step = -1
@@ -99,9 +97,11 @@ class TracerBase(object):
         self.step = step
         for name, param in self.model.named_parameters():
             if param is not None:
-                print(f"[name] : {name}")
-                print(f"[epoch-{epoch}][step-{step}][grad] : {param.grad}")
-        pass
+                self._set_current_save_path("Gradient")
+                hook_data = NewHookData(module=name, gradient=param)
+                self._save_pt_data(hook_data, mode="Gradient")
+                # print(f"[epoch-{epoch}][step-{step}][grad] : {param.grad}")
+
 
     def untrace(self):
         if self.trace_mode == 0:
@@ -120,7 +120,13 @@ class TracerBase(object):
         pass
 
     def _set_current_save_path(self, mode="Forward"):
-        self.current_save_path = self.forward_log_path if mode == "Forward" else self.backward_log_path
+        if mode == "Forward":
+            self.current_save_path = self.forward_path
+        elif mode == "Backward":
+            self.current_save_path = self.backward_path
+        elif mode == "Gradient":
+            self.current_save_path = self.gradient_path
+
         if self.epoch != -1:
             self.current_save_path = os.path.join(
                 self.current_save_path, "epoch" + str(self.epoch))
@@ -153,10 +159,6 @@ class DumpPtFileTracer(TracerBase):
         self.dump_pt_hook_options = config.get(
             'dump_pt_hook_options', {}
         )
-        if self.forward_hook:
-            self.save_forward_number = 0
-        if self.backward_hook:
-            self.save_backward_number = 0
 
         if self.has_hacker:
             self.hacker.hack(self.hook_forward_fn, self.hook_backward_fn)
@@ -177,31 +179,23 @@ class DumpPtFileTracer(TracerBase):
 
     def _hook_impl(self, module, input, output, mode="Forward"):
         if self.is_trace:
-            if self.only_input:
-                output = None
-            if self.only_output:
-                input = None
             self._set_current_save_path(mode)
-
-            timestamp = str(int(time.time()))
-            hook_data = NewHookData(module, input, output, timestamp)
+            hook_data = NewHookData(module, input, output)
             self._save_pt_data(hook_data, mode=mode)
 
     def _save_pt_data(self, data, mode="Forward"):
-        if mode == "Forward":
-            pt_file = os.path.join(self.current_save_path, "forward_" +
-                                   str(self.save_forward_number).zfill(6) + ".pt")
-            self.save_forward_number = self.save_forward_number + 1
-            with open(pt_file, "wb+") as f:
-                self._save_module_name_file_path_map(data.module_name, pt_file)
-                torch.save(data, f)
-        else:
-            pt_file = os.path.join(self.current_save_path, "backward_" +
-                                   str(self.save_backward_number).zfill(6) + ".pt")
-            self.save_backward_number = self.save_backward_number + 1
-            with open(pt_file, "wb+") as f:
-                self._save_module_name_file_path_map(data.module_name, pt_file)
-                torch.save(data, f)
+        counter_dict = {
+            "Forward": "save_forward_number",
+            "Backward": "save_backward_number",
+            "Gradient": "save_gradient_number"
+        }
+        counter = getattr(self, counter_dict[mode])
+        pt_file = os.path.join(self.current_save_path, mode.lower() +
+                            "_" + str(counter).zfill(6) + ".pt")
+        setattr(self, counter_dict[mode], counter + 1)
+        with open(pt_file, "wb+") as f:
+            self._save_module_name_file_path_map(data.module_name, pt_file)
+            torch.save(data, f)
 
 
 class Tracer(object):

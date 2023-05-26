@@ -23,10 +23,6 @@ trace_granularity : 0
 
 # hook configuration
   # hook trace : (module , input, output)
-  # you can choose only input or output
-
-only_input : false
-only_output : false
 
 # you can register the following hooks :
 # you can choose one or more hooks
