@@ -30,12 +30,14 @@ compare_directory_options:
   # compare_steps:
   #   - 3
   #   - 4
-  only_compare_forward: false
-  only_compare_backward: false
+  compare_folder_name:
+    - "backward"
+    - "forward"
+    - "gradient"
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1684226731"
-  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1684226933"
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685099524/"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685099933/"
 
 # ------- compare file
 # compare_file_options :
@@ -54,7 +56,7 @@ compare_by_order : true
 # evaluator configuration
 evaluation_metrics:
   # you dont need to use all evaluate methods, use what you need.
-  # - "L1"        # L1 loss
+  - "L1"        # L1 loss
   - "AE"        # absolute error
   - "CS"        # cosine similarity
   - "MSE"       # mean squared error
@@ -67,17 +69,15 @@ evaluation_metrics:
   # - "skip_nn_module"          # "skip nn.module"
   # - "skip_non_nn_module"      # "skip non nn.module function"
 
-show_max_error_only : true
-
 # filter configuration
 filter:
   # Only errors greater than xxx_filter are displayed.
-  # "global_filter" : 1e-05      # You can set the filters globally, or individually
+  "global_filter" : 1e-05      # You can set the filters globally, or individually
   # -----------------------
   # "L1_filter" : 1e-05
-  "AE_filter" : 1e-05
-  "CS_filter" : 1e-02
-  "MSE_filter"  : 1e-05
-  "MAE_filter"  : 1e-05
-  "RMSE_filter" : 1e-05
-  "MAPE_filter" : 1e-05
+  # "AE_filter" : 1e-05
+  # "CS_filter" : 1e-05
+  # "MSE_filter"  : 1e-05
+  # "MAE_filter"  : 1e-05
+  # "RMSE_filter" : 1e-05
+  # "MAPE_filter" : 1e-05

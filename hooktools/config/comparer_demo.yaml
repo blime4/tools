@@ -30,12 +30,14 @@ compare_directory_options:
   # compare_steps:
   #   - 3
   #   - 4
-  only_compare_forward: false
-  only_compare_backward: false
+  compare_folder_name:
+    - "backward"
+    - "forward"
+    - "gradient"
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1684226731"
-  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_backward_hook_1684226933"
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685099524/"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685099933/"
 
 # ------- compare file
 # compare_file_options :

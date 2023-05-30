@@ -1,15 +1,10 @@
 1. Suspicious operator network construction
-    1.1 BatchNorm [40%]
-        1.1.0 nv and nv compare
-        1.1.1 nv and dl compare
 2. Tracer + Comparer
     2.1 trace.trace(without epoch and step)
     2.2 env change epoch and step [optional]
     2.3 temperary only compare nn.module
     2.4 compare directory optimize
 3. Shower
-4. Bugs
-    4.1 find out why appear None.tensor
 5. Precision
     5.1 6923, div
 6. filter

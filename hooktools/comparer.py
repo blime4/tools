@@ -31,10 +31,6 @@ class Comparer(object):
             self.compare_epochs = compare_options.get('compare_epochs', [])
             self.compare_steps = compare_options.get('compare_steps', [])
 
-            self.only_compare_forward = compare_options.get(
-                'only_compare_forward', False)
-            self.only_compare_backward = compare_options.get(
-                'only_compare_backward', False)
             self.only_compare_input = compare_options.get(
                 'only_compare_input', False)
             self.only_compare_output = compare_options.get(
@@ -46,6 +42,9 @@ class Comparer(object):
                 'compared_directory_2')
             self._check_path_exists(self.compared_directory_1)
             self._check_path_exists(self.compared_directory_2)
+            
+            self.compare_folder_name = compare_options.get(
+                'compare_folder_name', [])
 
             self.compared_file_1 = ""
             self.compared_file_2 = ""
@@ -86,31 +85,49 @@ class Comparer(object):
     def compare_directory(self):
         # if compare_epochs or compare_steps is not set,
         # default compare all epochs or steps in the compared directory.
-        if not self.compare_epochs:
-            epochs = sorted(os.listdir(self.compared_directory_1))
-        else:
-            epochs = ["epoch" + str(i) for i in self.compare_epochs]
-
-        # epoch --------------------------------
-        for epoch in tqdm(epochs, desc="epoch : "):
-            epoch_path_1 = os.path.join(self.compared_directory_1, epoch)
-            epoch_path_2 = os.path.join(self.compared_directory_2, epoch)
-
-            if not self.compare_steps:
-                steps = sorted(os.listdir(epoch_path_1))
+        # ├── backward
+        # │   └── epoch0
+        # │       └── step1
+        # ├── forward
+        # │   └── epoch0
+        # │       └── step1
+        # └── gradient
+        #     └── epoch0
+        #         ├── step0
+        #         ├── step1
+        folder_name = [f for f in os.listdir(self.compared_directory_1) if f in self.compare_folder_name]
+        print("compare_folder_name : ", self.compare_folder_name)
+        print("folder_name : ", folder_name)
+        # folder --------------------------------
+        for folder in tqdm(folder_name, desc="folder : \n"):
+            folder_path_1 = os.path.join(self.compared_directory_1, folder)
+            folder_path_2 = os.path.join(self.compared_directory_1, folder)
+            
+            if not self.compare_epochs:
+                epochs = sorted(os.listdir(folder_path_1))
             else:
-                steps = ["step" + str(i) for i in self.compare_steps]
+                epochs = ["epoch" + str(i) for i in self.compare_epochs]
 
-            # step --------------------------------
-            for step in tqdm(steps, desc="step : "):
-                step_path_1 = os.path.join(epoch_path_1, step)
-                step_path_2 = os.path.join(epoch_path_2, step)
+            # epoch --------------------------------
+            for epoch in tqdm(epochs, desc="epoch : \n"):
+                epoch_path_1 = os.path.join(folder_path_1, epoch)
+                epoch_path_2 = os.path.join(folder_path_2, epoch)
 
-                filelist_1 = get_file_list(
-                    path=step_path_1, endswith=self.file_type)
-                filelist_2 = get_file_list(
-                    path=step_path_2, endswith=self.file_type)
-                self.compare_filelist(filelist_1, filelist_2)
+                if not self.compare_steps:
+                    steps = sorted(os.listdir(epoch_path_1))
+                else:
+                    steps = ["step" + str(i) for i in self.compare_steps]
+
+                # step --------------------------------
+                for step in tqdm(steps, desc="step : \n"):
+                    step_path_1 = os.path.join(epoch_path_1, step)
+                    step_path_2 = os.path.join(epoch_path_2, step)
+
+                    filelist_1 = get_file_list(
+                        path=step_path_1, endswith=self.file_type)
+                    filelist_2 = get_file_list(
+                        path=step_path_2, endswith=self.file_type)
+                    self.compare_filelist(filelist_1, filelist_2)
 
     def compare_filelist(self, filelist_1, filelist_2):
         if self.compare_both_file:
@@ -184,7 +201,7 @@ class Evaluator(object):
 
         self.registered_evaluations = dict()
         if "L1" in self.evaluation_metrics:
-            self.register_evaluation("l1", self.evaluate_l1_loss)
+            self.register_evaluation("L1", self.evaluate_l1_loss)
         if "AE" in self.evaluation_metrics:
             self.register_evaluation("AE", self.evaluate_absolute_error)
         if "MAE" in self.evaluation_metrics:
@@ -229,7 +246,7 @@ class Evaluator(object):
             rel_error = l1_error / (actual.abs().float().mean())
             if l1_error * rel_error > 10:
                 print('\n###\n', 'should checked!', '\n###\n')
-            return (l1_error.detach().numpy(), rel_error.detach().numpy())
+            return (l1_error.detach(), rel_error.detach())
 
         except Exception as e:
             print("ERROR : ", e)
@@ -291,24 +308,33 @@ class Filter(object):
         self.filter_config = config.get('filter', {})
         self.show_max_error_only = config.get("show_max_error_only", False)
         if "global_filter" in self.filter_config:
-            setattr(self, "global_filter", self.filter_config["global_filter"])
+            setattr(self, "global_filter", eval(self.filter_config["global_filter"]))
+        else:
+            self.global_filter = None
 
         for name in ["L1_filter", "AE_filter", "CS_filter", "MSE_filter", "MAE_filter", "RMSE_filter", "MAPE_filter"]:
             if name in self.filter_config:
                 setattr(self, name, self.filter_config[name])
 
     def push_data(self, data=None, fn_name="", prefix="", attr=None):
-        max_data = torch.max(data)
+
         if fn_name == "L1":
             self.push_data(data[0], "l1_error", prefix, attr="L1_filter")
             self.push_data(data[1], "rel_error", prefix, attr="L1_filter")
-        attr = "{}_filter".format(fn_name) if attr is not None else attr
-        filter_error = eval(getattr(self, attr)) if hasattr(self, attr) else 0
-        if max_data > filter_error:
-            if self.show_max_error_only:
-                print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, max_data))
+        else:
+            max_data = torch.max(data)
+            attr = "{}_filter".format(fn_name) if attr is not None else attr
+            if attr is not None and hasattr(self, attr):
+                filter_error = eval(getattr(self, attr))
+            elif self.global_filter is not None:
+                filter_error = self.global_filter
             else:
-                print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, data))
+                filter_error = None
+            if filter_error is None or max_data > filter_error:
+                if self.show_max_error_only:
+                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, max_data))
+                else:
+                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, data))
 
 
 # TODO:
