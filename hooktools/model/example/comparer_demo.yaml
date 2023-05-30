@@ -58,7 +58,7 @@ evaluation_metrics:
   # you dont need to use all evaluate methods, use what you need.
   - "L1"        # L1 loss
   - "AE"        # absolute error
-  # - "CS"        # cosine similarity
+  - "CS"        # cosine similarity
   - "MSE"       # mean squared error
   - "MAE"       # mean absolute error
   - "RMSE"      # root mean squared error
@@ -72,12 +72,12 @@ evaluation_metrics:
 # filter configuration
 filter:
   # Only errors greater than xxx_filter are displayed.
-  "global_filter" : 1e-05      # You can set the filters globally, or individually
+  "global_filter" : "1e-05"      # You can set the filters globally, or individually
   # -----------------------
-  # "L1_filter" : 1e-05
-  # "AE_filter" : 1e-05
-  # "CS_filter" : 1e-05
-  # "MSE_filter"  : 1e-05
-  # "MAE_filter"  : 1e-05
-  # "RMSE_filter" : 1e-05
-  # "MAPE_filter" : 1e-05
+  # "L1_filter" : "1e-05"
+  # "AE_filter" : "1e-05"
+  "CS_filter" : "1.1"
+  # "MSE_filter"  : "1e-05"
+  # "MAE_filter"  : "1e-05"
+  # "RMSE_filter" : "1e-05"
+  # "MAPE_filter" : "1e-05"

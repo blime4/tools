@@ -326,7 +326,7 @@ class Filter(object):
             self.push_data(data[1], "rel_error", prefix, attr="L1_filter")
         else:
             max_data = torch.max(data)
-            attr = "{}_filter".format(fn_name) if attr is not None else attr
+            attr = "{}_filter".format(fn_name) if attr is None else attr
             if attr is not None and hasattr(self, attr):
                 filter_error = eval(getattr(self, attr))
             elif self.global_filter is not None:
@@ -335,9 +335,9 @@ class Filter(object):
                 filter_error = None
             if filter_error is None or max_data > filter_error:
                 if self.show_max_error_only:
-                    print("{: <5s}[{: <5s}]{}".format(prefix, fn_name, max_data))
+                    print("{}[{}]{} : ".format(prefix, fn_name, max_data))
                 else:
-                    print("{: <5s}[{: <5s}]{}".format(prefix, fn_name, data))
+                    print("{}[{}]{} : ".format(prefix, fn_name, data))
 
 
 # TODO:
