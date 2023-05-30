@@ -67,6 +67,8 @@ class Comparer(object):
         self.verbose = compare_options.get('verbose', False)
         if self.verbose:
             print(config)
+            
+        self.pretty = ""
 
     # TODO: complete compare mode and compare precision way.
 
@@ -127,6 +129,7 @@ class Comparer(object):
                         path=step_path_1, endswith=self.file_type)
                     filelist_2 = get_file_list(
                         path=step_path_2, endswith=self.file_type)
+                    self.pretty = "[{: <7s}][{: <4s}][{: <4s}]".format(folder, epoch, step)
                     self.compare_filelist(filelist_1, filelist_2)
 
     def compare_filelist(self, filelist_1, filelist_2):
@@ -156,7 +159,7 @@ class Comparer(object):
         with open(file_path_2, "rb") as f2:
             f2.seek(0)
             pt_data_2 = torch.load(f2)
-        self.evaluator.evalute(pt_data_1, pt_data_2)
+        self.evaluator.evalute(pt_data_1, pt_data_2, self.pretty)
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -286,7 +289,7 @@ class Evaluator(object):
             else:
                 raise TypeError(f"Unsupported data type : {type(actual)}")
 
-    def evalute(self, data_1, data_2):
+    def evalute(self, data_1, data_2, pretty):
         if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
             return
         if self.skip_non_nn_module and data_1.classify == "non nn.module" and data_2.classify == "non nn.module":
@@ -299,7 +302,7 @@ class Evaluator(object):
                   "\ndata_2 : ", data_2.module_name)
             print('\n###\n should checked! \n###\n')
 
-        self.evalute_(data_1, data_2)
+        self.evalute_(data_1, data_2, pretty)
 
 class Filter(object):
 
@@ -332,9 +335,9 @@ class Filter(object):
                 filter_error = None
             if filter_error is None or max_data > filter_error:
                 if self.show_max_error_only:
-                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, max_data))
+                    print("{: <5s}[{: <5s}]{}".format(prefix, fn_name, max_data))
                 else:
-                    print("[{: <5s}] {: <5s} {}".format(fn_name, prefix, data))
+                    print("{: <5s}[{: <5s}]{}".format(prefix, fn_name, data))
 
 
 # TODO:
