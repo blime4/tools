@@ -31,8 +31,8 @@ compare_directory_options:
   #   - 3
   #   - 4
   compare_folder_name:
-    - "backward"
     - "forward"
+    - "backward"
     - "gradient"
   only_compare_input: false
   only_compare_output: false

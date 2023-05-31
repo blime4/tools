@@ -271,10 +271,12 @@ class Evaluator(object):
 
         if isinstance(actual, NewHookData):
             if actual.input is not None:
-                self.evalute_(actual.input, desired.input, prefix+'[ input]')
+                self.evalute_(actual.input, desired.input, prefix+'[  input ]')
             if actual.output is not None:
                 self.evalute_(actual.output, desired.output,
-                              prefix+'[output]')
+                              prefix+'[ output ]')
+            if actual.gradient is not None:
+                self.evalute_(actual.gradient, desired.gradient, prefix+'[gradient]')
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
