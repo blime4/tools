@@ -98,12 +98,12 @@ class Comparer(object):
         #         ├── step0
         #         ├── step1
         folder_name = [f for f in os.listdir(self.compared_directory_1) if f in self.compare_folder_name]
-        print("compare_folder_name : ", self.compare_folder_name)
-        print("folder_name : ", folder_name)
         # folder --------------------------------
-        for folder in tqdm(folder_name, desc="folder :"):
+        folder_pbar = tqdm(folder_name)
+        for folder in folder_pbar:
             folder_path_1 = os.path.join(self.compared_directory_1, folder)
             folder_path_2 = os.path.join(self.compared_directory_1, folder)
+            folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}")
 
             if not self.compare_epochs:
                 epochs = sorted(os.listdir(folder_path_1))
@@ -111,7 +111,9 @@ class Comparer(object):
                 epochs = ["epoch" + str(i) for i in self.compare_epochs]
 
             # epoch --------------------------------
-            for epoch in tqdm(epochs, desc="epoch :"):
+            epoch_pbar = tqdm(epochs)
+            for epoch in epoch_pbar:
+                epoch_pbar.set_description(desc=f"Processing : {epoch}")
                 epoch_path_1 = os.path.join(folder_path_1, epoch)
                 epoch_path_2 = os.path.join(folder_path_2, epoch)
 
@@ -121,7 +123,9 @@ class Comparer(object):
                     steps = ["step" + str(i) for i in self.compare_steps]
 
                 # step --------------------------------
-                for step in tqdm(steps, desc="step :"):
+                step_pbar = tqdm(steps)
+                for step in step_pbar:
+                    step_pbar.set_description(desc=f"Processing : {step}")
                     step_path_1 = os.path.join(epoch_path_1, step)
                     step_path_2 = os.path.join(epoch_path_2, step)
 
@@ -139,7 +143,9 @@ class Comparer(object):
             for file1, file2 in tqdm(zip(both_file_list_1, both_file_list_2)):
                 self.compare_file(file1, file2)
         elif self.compare_by_order:
-            for file1, file2 in tqdm(zip(filelist_1, filelist_2), desc="Processing files..."):
+            file_pbar = tqdm(zip(filelist_1, filelist_2))
+            for file1, file2 in file_pbar:
+                file_pbar.set_description(desc=f"[{file1}]")
                 self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
@@ -335,7 +341,7 @@ class Filter(object):
             max_data = torch.max(data)
             attr = "{}_filter".format(fn_name) if attr is None else attr
             if attr is not None and hasattr(self, attr):
-                filter_error = eval(getattr(self, attr))
+                filter_error = eval(str(getattr(self, attr)))
             elif self.global_filter is not None:
                 filter_error = self.global_filter
             else:

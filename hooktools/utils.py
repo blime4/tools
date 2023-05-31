@@ -3,14 +3,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np  # type: ignore
-
 import os
 import yaml
 from pathlib import Path
 import time
-import torch
-import inspect
 
 def check_suffix(file="demo.yaml", suffix=('.yaml,'), msg=''):
     # Check file(s) for acceptable suffix
