@@ -36,8 +36,10 @@ compare_directory_options:
     - "gradient"
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685099524/"
-  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685099933/"
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685525643/"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685525766/"
+  compared_directory_1_name: "nv"
+  compared_directory_1_name: "dl"
 
 # ------- compare file
 # compare_file_options :
@@ -46,9 +48,8 @@ compare_directory_options:
 
 # ------- compare filelist
 compare_filelist_options :
-  compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683625252"    # 41 . nv
-  # compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/45-tmp/tracer_demo_forward_hook_1683623860" # 45 . dl
-  compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683626887" # 45 . dl
+  compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683625252"
+  compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683626887"
 verbose: true
 
 compare_by_order : true
@@ -65,7 +66,7 @@ evaluation_metrics:
   - "MAPE"      # mean absolute percentage error
 
   # configuration
-  - "verbose"                 # if comment out this option, some log will ignore
+  # - "verbose"                 # if comment out this option, some log will ignore
   # - "skip_nn_module"          # "skip nn.module"
   # - "skip_non_nn_module"      # "skip non nn.module function"
 

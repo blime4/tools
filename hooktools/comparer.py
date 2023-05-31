@@ -42,7 +42,7 @@ class Comparer(object):
                 'compared_directory_2')
             self._check_path_exists(self.compared_directory_1)
             self._check_path_exists(self.compared_directory_2)
-            
+
             self.compare_folder_name = compare_options.get(
                 'compare_folder_name', [])
 
@@ -67,7 +67,7 @@ class Comparer(object):
         self.verbose = compare_options.get('verbose', False)
         if self.verbose:
             print(config)
-            
+
         self.pretty = ""
 
     # TODO: complete compare mode and compare precision way.
@@ -101,17 +101,17 @@ class Comparer(object):
         print("compare_folder_name : ", self.compare_folder_name)
         print("folder_name : ", folder_name)
         # folder --------------------------------
-        for folder in tqdm(folder_name, desc="folder : \n"):
+        for folder in tqdm(folder_name, desc="folder :"):
             folder_path_1 = os.path.join(self.compared_directory_1, folder)
             folder_path_2 = os.path.join(self.compared_directory_1, folder)
-            
+
             if not self.compare_epochs:
                 epochs = sorted(os.listdir(folder_path_1))
             else:
                 epochs = ["epoch" + str(i) for i in self.compare_epochs]
 
             # epoch --------------------------------
-            for epoch in tqdm(epochs, desc="epoch : \n"):
+            for epoch in tqdm(epochs, desc="epoch :"):
                 epoch_path_1 = os.path.join(folder_path_1, epoch)
                 epoch_path_2 = os.path.join(folder_path_2, epoch)
 
@@ -121,7 +121,7 @@ class Comparer(object):
                     steps = ["step" + str(i) for i in self.compare_steps]
 
                 # step --------------------------------
-                for step in tqdm(steps, desc="step : \n"):
+                for step in tqdm(steps, desc="step :"):
                     step_path_1 = os.path.join(epoch_path_1, step)
                     step_path_2 = os.path.join(epoch_path_2, step)
 
@@ -139,7 +139,7 @@ class Comparer(object):
             for file1, file2 in tqdm(zip(both_file_list_1, both_file_list_2)):
                 self.compare_file(file1, file2)
         elif self.compare_by_order:
-            for file1, file2 in tqdm(zip(filelist_1, filelist_2), desc="Processing files...\n"):
+            for file1, file2 in tqdm(zip(filelist_1, filelist_2), desc="Processing files..."):
                 self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
@@ -272,6 +272,9 @@ class Evaluator(object):
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
+                if not torch.is_floating_point(actual):
+                    actual = actual.double()
+                    desired = desired.double()
                 error = evaluation_fn(actual, desired)
                 self.filter.push_data(error, fn_name, prefix)
 
@@ -296,7 +299,8 @@ class Evaluator(object):
             return
 
         if data_1.module_name == data_2.module_name:
-            print("module_name: ", data_1.module_name)
+            if self.verbose:
+                print("module_name: ", data_1.module_name)
         else:
             print("module_name: \ndata_1 :", data_1.module_name,
                   "\ndata_2 : ", data_2.module_name)
@@ -319,6 +323,9 @@ class Filter(object):
             if name in self.filter_config:
                 setattr(self, name, self.filter_config[name])
 
+        self.compared_directory_1_name = config.get("compared_directory_1_name", "")
+        self.compared_directory_2_name = config.get("compared_directory_2_name", "")
+
     def push_data(self, data=None, fn_name="", prefix="", attr=None):
 
         if fn_name == "L1":
@@ -339,8 +346,17 @@ class Filter(object):
                 else:
                     print("{}[{}]{} : ".format(prefix, fn_name, data))
 
+    def conclusion(self):
+        # 1. 统计每个module最大的误差 NV 和 DL
+            # 1.1 data.module_name
+        # 2. 统计最大的100个module误差
+        pass
+
+
 
 # TODO:
-# 1. L1
 # 2. conclusion
 # 3. topk
+# 4. 按照算子, 比较算子的误差，变化
+# 4.1 输入 算子名，获得误差变化
+# 4.2 提供一个函数，可以反复调用
