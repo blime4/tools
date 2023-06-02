@@ -92,7 +92,7 @@ class TracerBase(object):
         """
 
         if self.trace_mode == 0: return
-        print("tracing !!!!, epoch=%d, step=%d" % (epoch, step))
+        print("tracing gradient !!!!, epoch=%d, step=%d" % (epoch, step))
         self.epoch = epoch
         self.step = step
         for name, param in self.model.named_parameters():

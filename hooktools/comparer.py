@@ -102,7 +102,7 @@ class Comparer(object):
         folder_pbar = tqdm(folder_name)
         for folder in folder_pbar:
             folder_path_1 = os.path.join(self.compared_directory_1, folder)
-            folder_path_2 = os.path.join(self.compared_directory_1, folder)
+            folder_path_2 = os.path.join(self.compared_directory_2, folder)
             folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}")
 
             if not self.compare_epochs:
@@ -145,7 +145,7 @@ class Comparer(object):
         elif self.compare_by_order:
             file_pbar = tqdm(zip(filelist_1, filelist_2))
             for file1, file2 in file_pbar:
-                file_pbar.set_description(desc=f"[{file1}]")
+                file_pbar.set_description(desc=f"[{file1}]\n[{file2}]")
                 self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):

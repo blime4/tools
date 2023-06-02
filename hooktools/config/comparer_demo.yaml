@@ -36,8 +36,8 @@ compare_directory_options:
     - "gradient"
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/tmp/tracer_demo_1685693208"
-  compared_directory_2: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/dl-tmp/tracer_demo_1685678861"
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/tmp/tracer_demo_1685698986"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/dl-tmp-gradient/tracer_demo_1685699474"
   compared_directory_1_name: "nv"
   compared_directory_1_name: "dl"
 
