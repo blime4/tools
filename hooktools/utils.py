@@ -54,20 +54,32 @@ def get_classify(module):
 
 class NewHookData(object):
 
-    def __init__(self, module, input=None, output=None, tag="", gradient=None):
+    def __init__(self, module, input=None, output=None, gradient=None, tag="", formal=False):
         self.module_name = str(module)
-        self.classify = get_classify(module) if gradient is None else "gradient"
-        self.timestamp = str(int(time.time()))
-        self.tag = str(tag)
-        self.input = input
-        self.output = output
-        self.gradient = gradient
+        self.formal = formal
+
+        if input is not None:
+            self.input = input
+        if output is not None:
+            self.output = output
+        if gradient is not None:
+            self.gradient = gradient
+
+        if self.formal:
+            self.classify = get_classify(module) if gradient is None else "gradient"
+            self.timestamp = str(int(time.time()))
+            self.tag = str(tag)
 
     def __repr__(self) -> str:
-        return f"module_name    \t: {self.module_name},     \
-                \nclassify      \t: {self.classify},        \
-                \ninput.type    \t: {type(self.input)},     \
-                \noutput.type   \t: {type(self.output)},    \
-                \ngradient.type \t: {type(self.gradient)},  \
-                \ntimestamp     \t: {self.timestamp},       \
-                \ntag           \t: {self.tag}"
+        r = f"module_name    \t: {self.module_name}"
+        if hasattr(self, 'input'):
+            r += f",\n input.type    \t: {type(self.input)}"
+        if hasattr(self, 'output'):
+            r += f",\n output.type   \t: {type(self.output)}"
+        if hasattr(self, 'gradient'):
+            r += f",\n gradient.type \t: {type(self.gradient)}"
+        if self.formal:
+            r += f",\n classify      \t: {self.classify}"
+            r += f",\n timestamp     \t: {self.timestamp}"
+            r += f",\n tag           \t: {self.tag}"
+        return r

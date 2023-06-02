@@ -232,3 +232,6 @@ class Tracer(object):
                 untrace_fn()
         except:
             pass
+
+
+# think about if we need untrace_gradient api
