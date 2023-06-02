@@ -99,42 +99,41 @@ class Comparer(object):
         #         ├── step1
         folder_name = [f for f in os.listdir(self.compared_directory_1) if f in self.compare_folder_name]
         # folder --------------------------------
-        folder_pbar = tqdm(folder_name)
-        for folder in folder_pbar:
-            folder_path_1 = os.path.join(self.compared_directory_1, folder)
-            folder_path_2 = os.path.join(self.compared_directory_2, folder)
-            folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}")
-
-            if not self.compare_epochs:
-                epochs = sorted(os.listdir(folder_path_1))
-            else:
-                epochs = ["epoch" + str(i) for i in self.compare_epochs]
-
-            # epoch --------------------------------
-            epoch_pbar = tqdm(epochs)
-            for epoch in epoch_pbar:
-                epoch_pbar.set_description(desc=f"Processing : {epoch}")
-                epoch_path_1 = os.path.join(folder_path_1, epoch)
-                epoch_path_2 = os.path.join(folder_path_2, epoch)
-
-                if not self.compare_steps:
-                    steps = sorted(os.listdir(epoch_path_1))
+        with tqdm(folder_name) as folder_pbar:
+            for folder in folder_pbar:
+                folder_path_1 = os.path.join(self.compared_directory_1, folder)
+                folder_path_2 = os.path.join(self.compared_directory_2, folder)
+                # folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}", refresh=False)
+                if not self.compare_epochs:
+                    epochs = sorted(os.listdir(folder_path_1))
                 else:
-                    steps = ["step" + str(i) for i in self.compare_steps]
+                    epochs = ["epoch" + str(i) for i in self.compare_epochs]
 
-                # step --------------------------------
-                step_pbar = tqdm(steps)
-                for step in step_pbar:
-                    step_pbar.set_description(desc=f"Processing : {step}")
-                    step_path_1 = os.path.join(epoch_path_1, step)
-                    step_path_2 = os.path.join(epoch_path_2, step)
+                # epoch --------------------------------
+                with tqdm(epochs) as epoch_pbar:
+                    for epoch in epoch_pbar:
+                        # epoch_pbar.set_description(desc=f"Processing : {epoch}", refresh=False)
+                        epoch_path_1 = os.path.join(folder_path_1, epoch)
+                        epoch_path_2 = os.path.join(folder_path_2, epoch)
 
-                    filelist_1 = get_file_list(
-                        path=step_path_1, endswith=self.file_type)
-                    filelist_2 = get_file_list(
-                        path=step_path_2, endswith=self.file_type)
-                    self.pretty = "[{: <7s}][{: <4s}][{: <4s}]".format(folder, epoch, step)
-                    self.compare_filelist(filelist_1, filelist_2)
+                        if not self.compare_steps:
+                            steps = sorted(os.listdir(epoch_path_1))
+                        else:
+                            steps = ["step" + str(i) for i in self.compare_steps]
+
+                        # step --------------------------------
+                        with tqdm(steps) as step_pbar:
+                            for step in step_pbar:
+                                # step_pbar.set_description(desc=f"Processing : {step}", refresh=False)
+                                step_path_1 = os.path.join(epoch_path_1, step)
+                                step_path_2 = os.path.join(epoch_path_2, step)
+
+                                filelist_1 = get_file_list(
+                                    path=step_path_1, endswith=self.file_type)
+                                filelist_2 = get_file_list(
+                                    path=step_path_2, endswith=self.file_type)
+                                self.pretty = "[{: <7s}][{: <4s}][{: <4s}]".format(folder, epoch, step)
+                                self.compare_filelist(filelist_1, filelist_2)
 
     def compare_filelist(self, filelist_1, filelist_2):
         if self.compare_both_file:
@@ -143,10 +142,10 @@ class Comparer(object):
             for file1, file2 in tqdm(zip(both_file_list_1, both_file_list_2)):
                 self.compare_file(file1, file2)
         elif self.compare_by_order:
-            file_pbar = tqdm(zip(filelist_1, filelist_2))
-            for file1, file2 in file_pbar:
-                file_pbar.set_description(desc=f"[{file1}]\n[{file2}]")
-                self.compare_file(file1, file2)
+            with tqdm(zip(filelist_1, filelist_2)) as file_pbar:
+                for file1, file2 in file_pbar:
+                    # file_pbar.set_description(desc=f"[{file1}]", refresh=False)
+                    self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
         if not file_path_1 and not file_path_2:
@@ -207,6 +206,7 @@ class Evaluator(object):
         self.verbose = 'verbose' in self.evaluation_metrics
         self.skip_nn_module = 'skip_nn_module' in self.evaluation_metrics
         self.skip_non_nn_module = 'skip_non_nn_module' in self.evaluation_metrics
+        self.current_module = ""
 
         self.registered_evaluations = dict()
         if "L1" in self.evaluation_metrics:
@@ -270,6 +270,8 @@ class Evaluator(object):
             desired), f"type(actual) is {type(actual)} which is not same with type(desired) : {type(desired)}"
 
         if isinstance(actual, NewHookData):
+            assert(actual.module_name, desired.module_name,
+                   f"module_name must be same : actual : {actual.module_name} , desired : {desired.module_name}")
             if hasattr(actual, "input"):
                 self.evalute_(actual.input, desired.input, prefix+'[  input ]')
             if hasattr(actual, "output"):
@@ -279,6 +281,7 @@ class Evaluator(object):
                 self.evalute_(actual.gradient, desired.gradient, prefix+'[gradient]')
             if hasattr(actual, "gradient_grad"):
                 self.evalute_(actual.gradient_grad, desired.gradient_grad, prefix+'[gradient_grad]')
+            self.current_module = actual.module_name
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
@@ -286,7 +289,7 @@ class Evaluator(object):
                     actual = actual.double()
                     desired = desired.double()
                 error = evaluation_fn(actual, desired)
-                self.filter.push_data(error, fn_name, prefix)
+                self.filter.push_data(error, fn_name, prefix, self.current_module)
 
         elif isinstance(actual, (list, tuple)):
             for idx, (val1, val2) in enumerate(zip(actual, desired)):
@@ -336,11 +339,11 @@ class Filter(object):
         self.compared_directory_1_name = config.get("compared_directory_1_name", "")
         self.compared_directory_2_name = config.get("compared_directory_2_name", "")
 
-    def push_data(self, data=None, fn_name="", prefix="", attr=None):
+    def push_data(self, data=None, fn_name="", prefix="", module="", attr=None):
 
         if fn_name == "L1":
-            self.push_data(data[0], "l1_error", prefix, attr="L1_filter")
-            self.push_data(data[1], "rel_error", prefix, attr="L1_filter")
+            self.push_data(data[0], "l1_error", prefix, module, attr="L1_filter", )
+            self.push_data(data[1], "rel_error", prefix, module, attr="L1_filter")
         else:
             max_data = torch.max(data)
             attr = "{}_filter".format(fn_name) if attr is None else attr
@@ -351,10 +354,11 @@ class Filter(object):
             else:
                 filter_error = None
             if filter_error is None or max_data > filter_error:
+                print(f"-----\n[module] : {module}")
                 if self.show_max_error_only:
-                    print("{}[{}]{} : ".format(prefix, fn_name, max_data))
+                    print("{}[{}] : {}".format(prefix, fn_name, max_data), end='\n')
                 else:
-                    print("{}[{}]{} : ".format(prefix, fn_name, data))
+                    print("{}[{}] : {}".format(prefix, fn_name, data), end='\n')
 
     def conclusion(self):
         # 1. 统计每个module最大的误差 NV 和 DL
