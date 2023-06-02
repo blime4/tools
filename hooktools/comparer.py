@@ -270,13 +270,15 @@ class Evaluator(object):
             desired), f"type(actual) is {type(actual)} which is not same with type(desired) : {type(desired)}"
 
         if isinstance(actual, NewHookData):
-            if actual.input is not None:
+            if hasattr(actual, "input"):
                 self.evalute_(actual.input, desired.input, prefix+'[  input ]')
-            if actual.output is not None:
+            if hasattr(actual, "output"):
                 self.evalute_(actual.output, desired.output,
                               prefix+'[ output ]')
-            if actual.gradient is not None:
+            if hasattr(actual, "gradient"):
                 self.evalute_(actual.gradient, desired.gradient, prefix+'[gradient]')
+            if hasattr(actual, "gradient_grad"):
+                self.evalute_(actual.gradient_grad, desired.gradient_grad, prefix+'[gradient_grad]')
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():

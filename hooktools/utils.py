@@ -7,6 +7,7 @@ import os
 import yaml
 from pathlib import Path
 import time
+import torch.nn as nn
 
 def check_suffix(file="demo.yaml", suffix=('.yaml,'), msg=''):
     # Check file(s) for acceptable suffix
@@ -52,18 +53,29 @@ def get_classify(module):
     else:
         return "nn.module"
 
-class NewHookData(object):
+class NewHookData(nn.Module):
 
-    def __init__(self, module, input=None, output=None, gradient=None, tag="", formal=False):
+    def __init__(self, module,
+                 input=None, input_grad=None,
+                 output=None, output_grad=None,
+                 gradient=None, gradient_grad=None,
+                 tag="", formal=False):
+        super(NewHookData, self).__init__()
         self.module_name = str(module)
         self.formal = formal
 
         if input is not None:
             self.input = input
+        if input_grad is not None:
+            self.input_grad = input_grad
         if output is not None:
             self.output = output
+        if output_grad is not None:
+            self.output_grad = output_grad
         if gradient is not None:
             self.gradient = gradient
+        if gradient_grad is not None:
+            self.gradient_grad = gradient_grad
 
         if self.formal:
             self.classify = get_classify(module) if gradient is None else "gradient"
@@ -78,6 +90,14 @@ class NewHookData(object):
             r += f",\n output.type   \t: {type(self.output)}"
         if hasattr(self, 'gradient'):
             r += f",\n gradient.type \t: {type(self.gradient)}"
+
+        if hasattr(self, 'input_grad'):
+            r += f",\n input_grad.type    \t: {type(self.input_grad)}"
+        if hasattr(self, 'output_grad'):
+            r += f",\n output_grad.type   \t: {type(self.output_grad)}"
+        if hasattr(self, 'gradient_grad'):
+            r += f",\n gradient_grad.type \t: {type(self.gradient_grad)}"
+
         if self.formal:
             r += f",\n classify      \t: {self.classify}"
             r += f",\n timestamp     \t: {self.timestamp}"

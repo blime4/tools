@@ -24,20 +24,20 @@ compare_directory_options:
   # you can configure which epochs and steps to be compared
   # if compare_epochs or compare_steps is not set,
   # default compare all epochs or steps in the compared directory.
-  # compare_epochs:
-  #   - 0
+  compare_epochs:
+    - 0
   #   - 1
   # compare_steps:
   #   - 3
   #   - 4
   compare_folder_name:
-    - "forward"
+    # - "forward"
     - "backward"
     - "gradient"
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685525643/"
-  compared_directory_2: "/LocalRun/blime/2_Pytorch/model/Yolo/yolov3/tmp/tracer_demo_1685525766/"
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/tmp/tracer_demo_1685693208"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/dl-tmp/tracer_demo_1685678861"
   compared_directory_1_name: "nv"
   compared_directory_1_name: "dl"
 
@@ -73,7 +73,7 @@ evaluation_metrics:
 # filter configuration
 filter:
   # Only errors greater than xxx_filter are displayed.
-  "global_filter" : 1e-05      # You can set the filters globally, or individually
+  "global_filter" : 1e-12      # You can set the filters globally, or individually
   # -----------------------
   # "L1_filter" : 1e-05
   # "AE_filter" : 1e-05

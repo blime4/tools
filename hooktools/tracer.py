@@ -98,7 +98,7 @@ class TracerBase(object):
         for name, param in self.model.named_parameters():
             if param is not None:
                 self._set_current_save_path("Gradient")
-                hook_data = NewHookData(module=name, gradient=param)
+                hook_data = NewHookData(module=name, gradient=param, gradient_grad=param.grad)
                 self._save_pt_data(hook_data, mode="Gradient")
                 # print(f"[epoch-{epoch}][step-{step}][grad] : {param.grad}")
 
@@ -180,7 +180,7 @@ class DumpPtFileTracer(TracerBase):
     def _hook_impl(self, module, input, output, mode="Forward"):
         if self.is_trace:
             self._set_current_save_path(mode)
-            hook_data = NewHookData(module, input, output)
+            hook_data = NewHookData(module=module, input=input, output=output)
             self._save_pt_data(hook_data, mode=mode)
 
     def _save_pt_data(self, data, mode="Forward"):
