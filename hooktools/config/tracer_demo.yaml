@@ -35,7 +35,7 @@ dump_pt_hook_options :
 
 # hacker configuration demo
 
-hacker_non_nn_modules : true
+hacker_non_nn_modules : false
 hacker_options :
   verbose : false
 
