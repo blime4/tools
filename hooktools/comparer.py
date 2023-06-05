@@ -398,7 +398,7 @@ class Filter(object):
                 "error": error,
                 "actual": actual,
                 "desired": desired,
-
+                "pretty": self.get_pretty_state()
             }
         )
 
@@ -408,8 +408,7 @@ class Filter(object):
             topk_lst = sorted_lst[:k]
             print(f"Top {k} errors for function '{fn_name}':")
             for index, item in enumerate(topk_lst):
-                module, error, actual, desired = item["module"], item["error"], item["actual"], item["desired"]
-                pretty = self.get_pretty_state()
+                module, error, actual, desired, pretty = item["module"], item["error"], item["actual"], item["desired"], item["pretty"]
                 print(
                     f"\t{index} = {pretty} {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
 
