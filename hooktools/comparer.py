@@ -289,7 +289,13 @@ class Evaluator(object):
                     actual = actual.double()
                     desired = desired.double()
                 error = evaluation_fn(actual, desired)
-                self.filter.push_data(error, fn_name, prefix, self.current_module)
+                self.filter.push_data(error, fn_name, prefix)
+                if self.filter.print_raw_data:
+                    print("-------↓")
+                    print(f"[module] : {self.current_module}")
+                    print(f"[actual] : {actual}")
+                    print(f"[desired] : {desired}")
+                    print("-------↑")
 
         elif isinstance(actual, (list, tuple)):
             for idx, (val1, val2) in enumerate(zip(actual, desired)):
@@ -328,7 +334,7 @@ class Filter(object):
         self.filter_config = config.get('filter', {})
         self.show_max_error_only = config.get("show_max_error_only", False)
         if "global_filter" in self.filter_config:
-            setattr(self, "global_filter", eval(self.filter_config["global_filter"]))
+            setattr(self, "global_filter", eval(str(self.filter_config["global_filter"])))
         else:
             self.global_filter = None
 
@@ -338,12 +344,13 @@ class Filter(object):
 
         self.compared_directory_1_name = config.get("compared_directory_1_name", "")
         self.compared_directory_2_name = config.get("compared_directory_2_name", "")
+        self.print_raw_data = False
 
-    def push_data(self, data=None, fn_name="", prefix="", module="", attr=None):
+    def push_data(self, data=None, fn_name="", prefix="", attr=None):
 
         if fn_name == "L1":
-            self.push_data(data[0], "l1_error", prefix, module, attr="L1_filter", )
-            self.push_data(data[1], "rel_error", prefix, module, attr="L1_filter")
+            self.push_data(data[0], "l1_error", prefix, attr="L1_filter", )
+            # self.push_data(data[1], "rel_error", prefix, attr="L1_filter")
         else:
             max_data = torch.max(data)
             attr = "{}_filter".format(fn_name) if attr is None else attr
@@ -354,11 +361,14 @@ class Filter(object):
             else:
                 filter_error = None
             if filter_error is None or max_data > filter_error:
-                print(f"-----\n[module] : {module}")
                 if self.show_max_error_only:
+                    # todo : print raw data
                     print("{}[{}] : {}".format(prefix, fn_name, max_data), end='\n')
                 else:
                     print("{}[{}] : {}".format(prefix, fn_name, data), end='\n')
+                self.print_raw_data=True
+            else:
+                self.print_raw_data=False
 
     def conclusion(self):
         # 1. 统计每个module最大的误差 NV 和 DL

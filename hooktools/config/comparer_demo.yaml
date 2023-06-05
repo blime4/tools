@@ -58,7 +58,7 @@ compare_by_order : true
 evaluation_metrics:
   # you dont need to use all evaluate methods, use what you need.
   - "L1"        # L1 loss
-  - "AE"        # absolute error
+  # - "AE"        # absolute error
   # - "CS"        # cosine similarity
   # - "MSE"       # mean squared error
   # - "MAE"       # mean absolute error
@@ -73,7 +73,7 @@ evaluation_metrics:
 # filter configuration
 filter:
   # Only errors greater than xxx_filter are displayed.
-  "global_filter" : 1e-01      # You can set the filters globally, or individually
+  "global_filter" : 1e-03      # You can set the filters globally, or individually
   # -----------------------
   # "L1_filter" : 1e-05
   # "AE_filter" : 1e-05
