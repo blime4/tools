@@ -5,6 +5,8 @@ import numpy as np
 from tqdm import tqdm
 import torch
 import torch.nn as nn
+from collections import defaultdict
+from operator import itemgetter
 
 
 class Comparer(object):
@@ -84,6 +86,8 @@ class Comparer(object):
                 path=self.compared_filelist_2, endswith=self.file_type)
             self.compare_filelist(filelist_1, filelist_2)
 
+        self.evaluator.filter.conclusion()
+
     def compare_directory(self):
         # if compare_epochs or compare_steps is not set,
         # default compare all epochs or steps in the compared directory.
@@ -97,7 +101,8 @@ class Comparer(object):
         #     └── epoch0
         #         ├── step0
         #         ├── step1
-        folder_name = [f for f in os.listdir(self.compared_directory_1) if f in self.compare_folder_name]
+        folder_name = [f for f in os.listdir(
+            self.compared_directory_1) if f in self.compare_folder_name]
         # folder --------------------------------
         with tqdm(folder_name) as folder_pbar:
             for folder in folder_pbar:
@@ -119,7 +124,8 @@ class Comparer(object):
                         if not self.compare_steps:
                             steps = sorted(os.listdir(epoch_path_1))
                         else:
-                            steps = ["step" + str(i) for i in self.compare_steps]
+                            steps = ["step" + str(i)
+                                     for i in self.compare_steps]
 
                         # step --------------------------------
                         with tqdm(steps) as step_pbar:
@@ -132,7 +138,8 @@ class Comparer(object):
                                     path=step_path_1, endswith=self.file_type)
                                 filelist_2 = get_file_list(
                                     path=step_path_2, endswith=self.file_type)
-                                self.pretty = "[{: <7s}][{: <4s}][{: <4s}]".format(folder, epoch, step)
+                                self.pretty = "[{: <7s}][{: <4s}][{: <4s}]".format(
+                                    folder, epoch, step)
                                 self.compare_filelist(filelist_1, filelist_2)
 
     def compare_filelist(self, filelist_1, filelist_2):
@@ -278,9 +285,11 @@ class Evaluator(object):
                 self.evalute_(actual.output, desired.output,
                               prefix+'[ output ]')
             if hasattr(actual, "gradient"):
-                self.evalute_(actual.gradient, desired.gradient, prefix+'[gradient]')
+                self.evalute_(actual.gradient, desired.gradient,
+                              prefix+'[gradient]')
             if hasattr(actual, "gradient_grad"):
-                self.evalute_(actual.gradient_grad, desired.gradient_grad, prefix+'[gradient_grad]')
+                self.evalute_(actual.gradient_grad,
+                              desired.gradient_grad, prefix+'[gradient_grad]')
             self.current_module = actual.module_name
 
         elif isinstance(actual, torch.Tensor):
@@ -289,13 +298,8 @@ class Evaluator(object):
                     actual = actual.double()
                     desired = desired.double()
                 error = evaluation_fn(actual, desired)
-                self.filter.push_data(error, fn_name, prefix)
-                if self.filter.print_raw_data:
-                    print("-------↓")
-                    print(f"[module] : {self.current_module}")
-                    print(f"[actual] : {actual}")
-                    print(f"[desired] : {desired}")
-                    print("-------↑")
+                self.filter.push_data(
+                    error, fn_name, prefix, self.current_module, actual, desired)
 
         elif isinstance(actual, (list, tuple)):
             for idx, (val1, val2) in enumerate(zip(actual, desired)):
@@ -327,6 +331,7 @@ class Evaluator(object):
 
         self.evalute_(data_1, data_2, pretty)
 
+
 class Filter(object):
 
     def __init__(self, config):
@@ -334,7 +339,8 @@ class Filter(object):
         self.filter_config = config.get('filter', {})
         self.show_max_error_only = config.get("show_max_error_only", False)
         if "global_filter" in self.filter_config:
-            setattr(self, "global_filter", eval(str(self.filter_config["global_filter"])))
+            setattr(self, "global_filter", eval(
+                str(self.filter_config["global_filter"])))
         else:
             self.global_filter = None
 
@@ -342,15 +348,19 @@ class Filter(object):
             if name in self.filter_config:
                 setattr(self, name, self.filter_config[name])
 
-        self.compared_directory_1_name = config.get("compared_directory_1_name", "")
-        self.compared_directory_2_name = config.get("compared_directory_2_name", "")
-        self.print_raw_data = False
+        self.compared_directory_1_name = config.get(
+            "compared_directory_1_name", "")
+        self.compared_directory_2_name = config.get(
+            "compared_directory_2_name", "")
+        self.topk_dict = defaultdict(list)
 
-    def push_data(self, data=None, fn_name="", prefix="", attr=None):
+    def push_data(self, data=None, fn_name="", prefix="",  module="", actual=None, desired=None, attr=None):
 
         if fn_name == "L1":
-            self.push_data(data[0], "l1_error", prefix, attr="L1_filter", )
-            # self.push_data(data[1], "rel_error", prefix, attr="L1_filter")
+            self.push_data(data=data[0], fn_name="l1_error", prefix=prefix,
+                           module=module, actual=actual, desired=desired, attr="L1_filter")
+            # self.push_data(data=data[1], fn_name="rel_error", prefix=prefix,
+            #                module=module, actual=actual, desired=desired, attr="L1_filter")
         else:
             max_data = torch.max(data)
             attr = "{}_filter".format(fn_name) if attr is None else attr
@@ -363,19 +373,52 @@ class Filter(object):
             if filter_error is None or max_data > filter_error:
                 if self.show_max_error_only:
                     # todo : print raw data
-                    print("{}[{}] : {}".format(prefix, fn_name, max_data), end='\n')
+                    print("{}[{}] : {}".format(
+                        prefix, fn_name, max_data), end='\n')
                 else:
-                    print("{}[{}] : {}".format(prefix, fn_name, data), end='\n')
-                self.print_raw_data=True
-            else:
-                self.print_raw_data=False
+                    print("{}[{}] : {}".format(
+                        prefix, fn_name, data), end='\n')
+                self.print_raw_data(module, actual, desired)
+                # todo : think about max_data or data
+                self.add_topk(fn_name, module, max_data, actual, desired)
+
+    def print_raw_data(self, module, actual, desired):
+        print("-------↓")
+        print(f"[module] : {module}")
+        print(f"[actual] : {actual}")
+        print(f"[desired] : {desired}")
+        print("-------↑\n")
+
+    def add_topk(self, fn_name="", module="", error=None, actual=None, desired=None):
+        # if fn_name not in self.topk_dict:
+        #     self.topk_dict[fn_name] = defaultdict(list)
+        self.topk_dict[fn_name].append(
+            {
+                "module":module,
+                "error" :error,
+                "actual":actual,
+                "desired":desired
+            }
+        )
+
+    def print_topk(self, k=100):
+        for fn_name, lst in self.topk_dict.items():
+            sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
+            topk_lst = sorted_lst[:k]
+            print(f"Top {k} errors for function '{fn_name}':")
+            for index, item in enumerate(topk_lst):
+                module, error, actual, desired = item["module"], item["error"], item["actual"], item["desired"]
+                print(f"\t{index} = {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
 
     def conclusion(self):
         # 1. 统计每个module最大的误差 NV 和 DL
-            # 1.1 data.module_name
+        # 1.1 data.module_name
         # 2. 统计最大的100个module误差
-        pass
-
+        import time
+        torch.save(self.topk_dict, "topk"+str(int(time.time()))+".pk")
+        print("\n\n")
+        print("conclusion".center(20, '-'))
+        print(self.print_topk())
 
 
 # TODO:
