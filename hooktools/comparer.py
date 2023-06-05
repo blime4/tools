@@ -70,8 +70,6 @@ class Comparer(object):
         if self.verbose:
             print(config)
 
-        self.pretty = ""
-
     # TODO: complete compare mode and compare precision way.
 
     def compare(self):
@@ -138,7 +136,7 @@ class Comparer(object):
                                     path=step_path_1, endswith=self.file_type)
                                 filelist_2 = get_file_list(
                                     path=step_path_2, endswith=self.file_type)
-                                self.pretty = "[{: <7s}][{: <4s}][{: <4s}]".format(
+                                self.evaluator.filter.set_state(
                                     folder, epoch, step)
                                 self.compare_filelist(filelist_1, filelist_2)
 
@@ -171,7 +169,7 @@ class Comparer(object):
         with open(file_path_2, "rb") as f2:
             f2.seek(0)
             pt_data_2 = torch.load(f2)
-        self.evaluator.evalute(pt_data_1, pt_data_2, self.pretty)
+        self.evaluator.evalute(pt_data_1, pt_data_2)
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -315,7 +313,7 @@ class Evaluator(object):
             else:
                 raise TypeError(f"Unsupported data type : {type(actual)}")
 
-    def evalute(self, data_1, data_2, pretty):
+    def evalute(self, data_1, data_2):
         if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
             return
         if self.skip_non_nn_module and data_1.classify == "non nn.module" and data_2.classify == "non nn.module":
@@ -329,7 +327,7 @@ class Evaluator(object):
                   "\ndata_2 : ", data_2.module_name)
             print('\n###\n should checked! \n###\n')
 
-        self.evalute_(data_1, data_2, pretty)
+        self.evalute_(data_1, data_2)
 
 
 class Filter(object):
@@ -354,6 +352,9 @@ class Filter(object):
             "compared_directory_2_name", "")
         self.topk_dict = defaultdict(list)
 
+        self.pretty = ""
+        self.state = defaultdict()
+
     def push_data(self, data=None, fn_name="", prefix="",  module="", actual=None, desired=None, attr=None):
 
         if fn_name == "L1":
@@ -370,14 +371,13 @@ class Filter(object):
                 filter_error = self.global_filter
             else:
                 filter_error = None
+
             if filter_error is None or max_data > filter_error:
-                if self.show_max_error_only:
-                    # todo : print raw data
-                    print("{}[{}] : {}".format(
-                        prefix, fn_name, max_data), end='\n')
-                else:
-                    print("{}[{}] : {}".format(
-                        prefix, fn_name, data), end='\n')
+                pretty = self.get_pretty_state()+prefix
+                data_to_print = max_data if self.show_max_error_only else data
+                print("{}[{}] : {}".format(
+                    pretty, fn_name, data_to_print), end='\n')
+
                 self.print_raw_data(module, actual, desired)
                 # todo : think about max_data or data
                 self.add_topk(fn_name, module, max_data, actual, desired)
@@ -394,10 +394,11 @@ class Filter(object):
         #     self.topk_dict[fn_name] = defaultdict(list)
         self.topk_dict[fn_name].append(
             {
-                "module":module,
-                "error" :error,
-                "actual":actual,
-                "desired":desired
+                "module": module,
+                "error": error,
+                "actual": actual,
+                "desired": desired,
+
             }
         )
 
@@ -408,7 +409,9 @@ class Filter(object):
             print(f"Top {k} errors for function '{fn_name}':")
             for index, item in enumerate(topk_lst):
                 module, error, actual, desired = item["module"], item["error"], item["actual"], item["desired"]
-                print(f"\t{index} = {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
+                pretty = self.get_pretty_state()
+                print(
+                    f"\t{index} = {pretty} {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
 
     def conclusion(self):
         # 1. 统计每个module最大的误差 NV 和 DL
@@ -420,6 +423,15 @@ class Filter(object):
         print("conclusion".center(20, '-'))
         print(self.print_topk())
 
+    def set_state(self, folder, epoch, step):
+        self.state = {
+            "folder": folder,
+            "epoch": epoch,
+            "step": step,
+        }
+
+    def get_pretty_state(self):
+        return f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}]"
 
 # TODO:
 # 2. conclusion
