@@ -5,6 +5,8 @@ import numpy as np
 from tqdm import tqdm
 import torch
 import torch.nn as nn
+from collections import defaultdict
+from operator import itemgetter
 
 
 class Comparer(object):
@@ -68,8 +70,6 @@ class Comparer(object):
         if self.verbose:
             print(config)
 
-        self.pretty = ""
-
     # TODO: complete compare mode and compare precision way.
 
     def compare(self):
@@ -84,6 +84,8 @@ class Comparer(object):
                 path=self.compared_filelist_2, endswith=self.file_type)
             self.compare_filelist(filelist_1, filelist_2)
 
+        self.evaluator.filter.conclusion()
+
     def compare_directory(self):
         # if compare_epochs or compare_steps is not set,
         # default compare all epochs or steps in the compared directory.
@@ -97,44 +99,46 @@ class Comparer(object):
         #     └── epoch0
         #         ├── step0
         #         ├── step1
-        folder_name = [f for f in os.listdir(self.compared_directory_1) if f in self.compare_folder_name]
+        folder_name = [f for f in os.listdir(
+            self.compared_directory_1) if f in self.compare_folder_name]
         # folder --------------------------------
-        folder_pbar = tqdm(folder_name)
-        for folder in folder_pbar:
-            folder_path_1 = os.path.join(self.compared_directory_1, folder)
-            folder_path_2 = os.path.join(self.compared_directory_1, folder)
-            folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}")
-
-            if not self.compare_epochs:
-                epochs = sorted(os.listdir(folder_path_1))
-            else:
-                epochs = ["epoch" + str(i) for i in self.compare_epochs]
-
-            # epoch --------------------------------
-            epoch_pbar = tqdm(epochs)
-            for epoch in epoch_pbar:
-                epoch_pbar.set_description(desc=f"Processing : {epoch}")
-                epoch_path_1 = os.path.join(folder_path_1, epoch)
-                epoch_path_2 = os.path.join(folder_path_2, epoch)
-
-                if not self.compare_steps:
-                    steps = sorted(os.listdir(epoch_path_1))
+        with tqdm(folder_name) as folder_pbar:
+            for folder in folder_pbar:
+                folder_path_1 = os.path.join(self.compared_directory_1, folder)
+                folder_path_2 = os.path.join(self.compared_directory_2, folder)
+                # folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}", refresh=False)
+                if not self.compare_epochs:
+                    epochs = sorted(os.listdir(folder_path_1))
                 else:
-                    steps = ["step" + str(i) for i in self.compare_steps]
+                    epochs = ["epoch" + str(i) for i in self.compare_epochs]
 
-                # step --------------------------------
-                step_pbar = tqdm(steps)
-                for step in step_pbar:
-                    step_pbar.set_description(desc=f"Processing : {step}")
-                    step_path_1 = os.path.join(epoch_path_1, step)
-                    step_path_2 = os.path.join(epoch_path_2, step)
+                # epoch --------------------------------
+                with tqdm(epochs) as epoch_pbar:
+                    for epoch in epoch_pbar:
+                        # epoch_pbar.set_description(desc=f"Processing : {epoch}", refresh=False)
+                        epoch_path_1 = os.path.join(folder_path_1, epoch)
+                        epoch_path_2 = os.path.join(folder_path_2, epoch)
 
-                    filelist_1 = get_file_list(
-                        path=step_path_1, endswith=self.file_type)
-                    filelist_2 = get_file_list(
-                        path=step_path_2, endswith=self.file_type)
-                    self.pretty = "[{: <7s}][{: <4s}][{: <4s}]".format(folder, epoch, step)
-                    self.compare_filelist(filelist_1, filelist_2)
+                        if not self.compare_steps:
+                            steps = sorted(os.listdir(epoch_path_1))
+                        else:
+                            steps = ["step" + str(i)
+                                     for i in self.compare_steps]
+
+                        # step --------------------------------
+                        with tqdm(steps) as step_pbar:
+                            for step in step_pbar:
+                                # step_pbar.set_description(desc=f"Processing : {step}", refresh=False)
+                                step_path_1 = os.path.join(epoch_path_1, step)
+                                step_path_2 = os.path.join(epoch_path_2, step)
+
+                                filelist_1 = get_file_list(
+                                    path=step_path_1, endswith=self.file_type)
+                                filelist_2 = get_file_list(
+                                    path=step_path_2, endswith=self.file_type)
+                                self.evaluator.filter.set_state(
+                                    folder, epoch, step)
+                                self.compare_filelist(filelist_1, filelist_2)
 
     def compare_filelist(self, filelist_1, filelist_2):
         if self.compare_both_file:
@@ -143,10 +147,10 @@ class Comparer(object):
             for file1, file2 in tqdm(zip(both_file_list_1, both_file_list_2)):
                 self.compare_file(file1, file2)
         elif self.compare_by_order:
-            file_pbar = tqdm(zip(filelist_1, filelist_2))
-            for file1, file2 in file_pbar:
-                file_pbar.set_description(desc=f"[{file1}]")
-                self.compare_file(file1, file2)
+            with tqdm(zip(filelist_1, filelist_2)) as file_pbar:
+                for file1, file2 in file_pbar:
+                    # file_pbar.set_description(desc=f"[{file1}]", refresh=False)
+                    self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
         if not file_path_1 and not file_path_2:
@@ -165,7 +169,7 @@ class Comparer(object):
         with open(file_path_2, "rb") as f2:
             f2.seek(0)
             pt_data_2 = torch.load(f2)
-        self.evaluator.evalute(pt_data_1, pt_data_2, self.pretty)
+        self.evaluator.evalute(pt_data_1, pt_data_2)
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -207,6 +211,7 @@ class Evaluator(object):
         self.verbose = 'verbose' in self.evaluation_metrics
         self.skip_nn_module = 'skip_nn_module' in self.evaluation_metrics
         self.skip_non_nn_module = 'skip_non_nn_module' in self.evaluation_metrics
+        self.current_module = ""
 
         self.registered_evaluations = dict()
         if "L1" in self.evaluation_metrics:
@@ -270,15 +275,20 @@ class Evaluator(object):
             desired), f"type(actual) is {type(actual)} which is not same with type(desired) : {type(desired)}"
 
         if isinstance(actual, NewHookData):
+            assert(actual.module_name, desired.module_name,
+                   f"module_name must be same : actual : {actual.module_name} , desired : {desired.module_name}")
             if hasattr(actual, "input"):
                 self.evalute_(actual.input, desired.input, prefix+'[  input ]')
             if hasattr(actual, "output"):
                 self.evalute_(actual.output, desired.output,
                               prefix+'[ output ]')
             if hasattr(actual, "gradient"):
-                self.evalute_(actual.gradient, desired.gradient, prefix+'[gradient]')
+                self.evalute_(actual.gradient, desired.gradient,
+                              prefix+'[gradient]')
             if hasattr(actual, "gradient_grad"):
-                self.evalute_(actual.gradient_grad, desired.gradient_grad, prefix+'[gradient_grad]')
+                self.evalute_(actual.gradient_grad,
+                              desired.gradient_grad, prefix+'[gradient_grad]')
+            self.current_module = actual.module_name
 
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
@@ -286,7 +296,8 @@ class Evaluator(object):
                     actual = actual.double()
                     desired = desired.double()
                 error = evaluation_fn(actual, desired)
-                self.filter.push_data(error, fn_name, prefix)
+                self.filter.push_data(
+                    error, fn_name, prefix, self.current_module, actual, desired)
 
         elif isinstance(actual, (list, tuple)):
             for idx, (val1, val2) in enumerate(zip(actual, desired)):
@@ -302,7 +313,7 @@ class Evaluator(object):
             else:
                 raise TypeError(f"Unsupported data type : {type(actual)}")
 
-    def evalute(self, data_1, data_2, pretty):
+    def evalute(self, data_1, data_2):
         if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
             return
         if self.skip_non_nn_module and data_1.classify == "non nn.module" and data_2.classify == "non nn.module":
@@ -316,7 +327,8 @@ class Evaluator(object):
                   "\ndata_2 : ", data_2.module_name)
             print('\n###\n should checked! \n###\n')
 
-        self.evalute_(data_1, data_2, pretty)
+        self.evalute_(data_1, data_2)
+
 
 class Filter(object):
 
@@ -325,7 +337,8 @@ class Filter(object):
         self.filter_config = config.get('filter', {})
         self.show_max_error_only = config.get("show_max_error_only", False)
         if "global_filter" in self.filter_config:
-            setattr(self, "global_filter", eval(self.filter_config["global_filter"]))
+            setattr(self, "global_filter", eval(
+                str(self.filter_config["global_filter"])))
         else:
             self.global_filter = None
 
@@ -333,14 +346,22 @@ class Filter(object):
             if name in self.filter_config:
                 setattr(self, name, self.filter_config[name])
 
-        self.compared_directory_1_name = config.get("compared_directory_1_name", "")
-        self.compared_directory_2_name = config.get("compared_directory_2_name", "")
+        self.compared_directory_1_name = config.get(
+            "compared_directory_1_name", "")
+        self.compared_directory_2_name = config.get(
+            "compared_directory_2_name", "")
+        self.topk_dict = defaultdict(list)
 
-    def push_data(self, data=None, fn_name="", prefix="", attr=None):
+        self.pretty = ""
+        self.state = defaultdict()
+
+    def push_data(self, data=None, fn_name="", prefix="",  module="", actual=None, desired=None, attr=None):
 
         if fn_name == "L1":
-            self.push_data(data[0], "l1_error", prefix, attr="L1_filter")
-            self.push_data(data[1], "rel_error", prefix, attr="L1_filter")
+            self.push_data(data=data[0], fn_name="l1_error", prefix=prefix,
+                           module=module, actual=actual, desired=desired, attr="L1_filter")
+            # self.push_data(data=data[1], fn_name="rel_error", prefix=prefix,
+            #                module=module, actual=actual, desired=desired, attr="L1_filter")
         else:
             max_data = torch.max(data)
             attr = "{}_filter".format(fn_name) if attr is None else attr
@@ -350,19 +371,66 @@ class Filter(object):
                 filter_error = self.global_filter
             else:
                 filter_error = None
+
             if filter_error is None or max_data > filter_error:
-                if self.show_max_error_only:
-                    print("{}[{}]{} : ".format(prefix, fn_name, max_data))
-                else:
-                    print("{}[{}]{} : ".format(prefix, fn_name, data))
+                pretty = self.get_pretty_state()+prefix
+                data_to_print = max_data if self.show_max_error_only else data
+                print("{}[{}] : {}".format(
+                    pretty, fn_name, data_to_print), end='\n')
+
+                self.print_raw_data(module, actual, desired)
+                # todo : think about max_data or data
+                self.add_topk(fn_name, module, max_data, actual, desired)
+
+    def print_raw_data(self, module, actual, desired):
+        print("-------↓")
+        print(f"[module] : {module}")
+        print(f"[actual] : {actual}")
+        print(f"[desired] : {desired}")
+        print("-------↑\n")
+
+    def add_topk(self, fn_name="", module="", error=None, actual=None, desired=None):
+        # if fn_name not in self.topk_dict:
+        #     self.topk_dict[fn_name] = defaultdict(list)
+        self.topk_dict[fn_name].append(
+            {
+                "module": module,
+                "error": error,
+                "actual": actual,
+                "desired": desired,
+                "pretty": self.get_pretty_state()
+            }
+        )
+
+    def print_topk(self, k=100):
+        for fn_name, lst in self.topk_dict.items():
+            sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
+            topk_lst = sorted_lst[:k]
+            print(f"Top {k} errors for function '{fn_name}':")
+            for index, item in enumerate(topk_lst):
+                module, error, actual, desired, pretty = item["module"], item["error"], item["actual"], item["desired"], item["pretty"]
+                print(
+                    f"\t{index} = {pretty} {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
 
     def conclusion(self):
         # 1. 统计每个module最大的误差 NV 和 DL
-            # 1.1 data.module_name
+        # 1.1 data.module_name
         # 2. 统计最大的100个module误差
-        pass
+        import time
+        torch.save(self.topk_dict, "topk"+str(int(time.time()))+".pk")
+        print("\n\n")
+        print("conclusion".center(20, '-'))
+        print(self.print_topk())
 
+    def set_state(self, folder, epoch, step):
+        self.state = {
+            "folder": folder,
+            "epoch": epoch,
+            "step": step,
+        }
 
+    def get_pretty_state(self):
+        return f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}]"
 
 # TODO:
 # 2. conclusion
