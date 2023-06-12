@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from collections import defaultdict
 from operator import itemgetter
+import transformers
 
 
 class Comparer(object):
@@ -274,8 +275,7 @@ class Evaluator(object):
         assert type(actual) == type(desired), f"type(actual) is {type(actual)} which is not same with type(desired): {type(desired)}"
 
         if isinstance(actual, NewHookData):
-            assert(actual.module_name, desired.module_name,
-                   f"module_name must be same : actual : {actual.module_name} , desired : {desired.module_name}")
+            assert actual.module_name==desired.module_name, f"module_name must be same : actual : {actual.module_name} , desired : {desired.module_name}"
             if hasattr(actual, "input"):
                 self.evalute_(actual.input, desired.input, prefix+'[  input ]')
             if hasattr(actual, "output"):
@@ -288,7 +288,6 @@ class Evaluator(object):
                 self.evalute_(actual.gradient_grad,
                               desired.gradient_grad, prefix+'[gradient_grad]')
             self.current_module = actual.module_name
-
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
                 if not torch.is_floating_point(actual):
@@ -297,6 +296,18 @@ class Evaluator(object):
                 error = evaluation_fn(actual, desired)
                 self.filter.push_data(
                     error, fn_name, prefix, self.current_module, actual, desired)
+
+        elif isinstance(actual,transformers.modeling_outputs.BaseModelOutputWithPast):
+            if hasattr(actual, "last_hidden_state"):
+                self.evalute_(actual.last_hidden_state, desired.last_hidden_state, prefix+'[BaseModelOutputWithPast][last_hidden_state]')
+            if hasattr(actual, "past_key_values"):
+                self.evalute_(actual.past_key_values, desired.past_key_values, prefix+'[BaseModelOutputWithPast][past_key_values]')
+
+        elif isinstance(actual, transformers.modeling_outputs.CausalLMOutputWithPast):
+            if hasattr(actual, "logits"):
+                self.evalute_(actual.logits, desired.logits, prefix+'[CausalLMOutputWithPast][logits]')
+            if hasattr(actual, "past_key_values"):
+                self.evalute_(actual.past_key_values, desired.past_key_values, prefix+'[CausalLMOutputWithPast][past_key_values]')
 
         elif isinstance(actual, (list, tuple)):
             for idx, (val1, val2) in enumerate(zip(actual, desired)):
@@ -310,6 +321,10 @@ class Evaluator(object):
             if actual is None and desired is None:
                 pass
             else:
+                print(f"for debug : actual : {actual}, dir(actual) : {dir(actual)}, type(actual) : {type(actual)}")
+                print(f"for debug : desired : {desired}, dir(desired) : {dir(desired)}, type(desired) : {type(desired)}")
+                torch.save(actual, f"actual-{type(actual)}.pk")
+                torch.save(desired, f"actual-{type(desired)}.pk")
                 raise TypeError(f"Unsupported data type : {type(actual)}")
 
     def evalute(self, data_1, data_2):
