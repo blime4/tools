@@ -11,8 +11,10 @@ import os
 import hooktools
 from hooktools import Tracer
 
+model=TheNetYouTrace()                  # like model=Yolov3() or model=Bert()
+
 config_path = os.path.join(hooktools.__path__[0], "config")
-trace = Tracer(os.path.join(config_path, "tracer_demo.yaml"))
+trace = Tracer(os.path.join(config_path, "tracer_demo.yaml"), model)
 # or you can use the configuration file that you specify
 # trace = Tracer(path_to_your_configuration_file)
 

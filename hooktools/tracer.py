@@ -127,12 +127,11 @@ class TracerBase(object):
         elif mode == "Gradient":
             self.current_save_path = self.gradient_path
 
-        if self.epoch != -1:
-            self.current_save_path = os.path.join(
-                self.current_save_path, "epoch" + str(self.epoch))
-        if self.step != -1:
-            self.current_save_path = os.path.join(
-                self.current_save_path, "step" + str(self.step))
+        self.current_save_path = os.path.join(
+            self.current_save_path, "epoch" + str(self.epoch))
+        self.current_save_path = os.path.join(
+            self.current_save_path, "step" + str(self.step))
+
         if not os.path.exists(self.current_save_path):
             os.makedirs(self.current_save_path)
 
