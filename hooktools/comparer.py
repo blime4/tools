@@ -271,8 +271,7 @@ class Evaluator(object):
         return absolute_error
 
     def evalute_(self, actual, desired, prefix=""):
-        assert type(actual) == type(
-            desired), f"type(actual) is {type(actual)} which is not same with type(desired) : {type(desired)}"
+        assert type(actual) == type(desired), f"type(actual) is {type(actual)} which is not same with type(desired): {type(desired)}"
 
         if isinstance(actual, NewHookData):
             assert(actual.module_name, desired.module_name,
@@ -308,7 +307,7 @@ class Evaluator(object):
             if (actual != desired or self.verbose):
                 print(prefix, "\nactual:\t", actual, "\ndesired:\t", desired)
         else:
-            if actual == desired and actual is None:
+            if actual is None and desired is None:
                 pass
             else:
                 raise TypeError(f"Unsupported data type : {type(actual)}")
