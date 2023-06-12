@@ -75,34 +75,6 @@ class TracerBase(object):
                     self.forward_handle = module.register_forward_hook(self.hook_forward_fn) if self.forward_hook else None
                     self.backward_handle = module.register_backward_hook(self.hook_backward_fn) if self.backward_hook else None
 
-    def trace_gradient(self, epoch=-1, step=-1):
-        # usage :
-        """_summary_
-
-        Args:
-            epoch (int, optional): _description_. Defaults to -1.
-            step (int, optional): _description_. Defaults to -1.
-
-            example :
-
-                optimizer.step()
-            --> trace.trace_gradient(epoch, step)
-                optimizer.zero_grad()
-
-        """
-
-        if self.trace_mode == 0: return
-        print("tracing gradient !!!!, epoch=%d, step=%d" % (epoch, step))
-        self.epoch = epoch
-        self.step = step
-        for name, param in self.model.named_parameters():
-            if param is not None:
-                self._set_current_save_path("Gradient")
-                hook_data = NewHookData(module=name, gradient=param, gradient_grad=param.grad)
-                self._save_pt_data(hook_data, mode="Gradient")
-                # print(f"[epoch-{epoch}][step-{step}][grad] : {param.grad}")
-
-
     def untrace(self):
         if self.trace_mode == 0:
             return
@@ -112,6 +84,9 @@ class TracerBase(object):
             self.backward_handle.remove()
         self.epoch = -1
         self.step = -1
+
+    def trace_gradient(self, epoch=-1, step=-1):
+        pass
 
     def hook_forward_fn(self, module, input, output):
         pass
@@ -162,6 +137,9 @@ class DumpPtFileTracer(TracerBase):
         if self.has_hacker:
             self.hacker.hack(self.hook_forward_fn, self.hook_backward_fn)
 
+        self.hook_specifiy_modules = self.dump_pt_hook_options.get("hook_specifiy_modules", None)
+        print("for debug: self.hook_specifiy_modules : ", self.hook_specifiy_modules)
+
     def hook_forward_fn(self, module, input, output):
         self._hook_impl(module, input, output, "Forward")
 
@@ -176,11 +154,40 @@ class DumpPtFileTracer(TracerBase):
         self.is_trace=False
         return super().untrace()
 
+    def trace_gradient(self, epoch=-1, step=-1):
+        # usage :
+        """_summary_
+
+        Args:
+            epoch (int, optional): _description_. Defaults to -1.
+            step (int, optional): _description_. Defaults to -1.
+
+            example :
+
+                optimizer.step()
+            --> trace.trace_gradient(epoch, step)
+                optimizer.zero_grad()
+
+        """
+
+        if self.trace_mode == 0: return
+        print("tracing gradient !!!!, epoch=%d, step=%d" % (epoch, step))
+        self.epoch = epoch
+        self.step = step
+        for name, param in self.model.named_parameters():
+            if param is not None:
+                if self.hook_specifiy_modules is None or any(str(name).startswith(specifiy_module) for specifiy_module in self.hook_specifiy_modules):
+                    self._set_current_save_path("Gradient")
+                    hook_data = NewHookData(module=name, gradient=param, gradient_grad=param.grad)
+                    self._save_pt_data(hook_data, mode="Gradient")
+                    # print(f"[epoch-{epoch}][step-{step}][grad] : {param.grad}")
+
     def _hook_impl(self, module, input, output, mode="Forward"):
         if self.is_trace:
-            self._set_current_save_path(mode)
-            hook_data = NewHookData(module=module, input=input, output=output)
-            self._save_pt_data(hook_data, mode=mode)
+            if self.hook_specifiy_modules is None or any(str(module).startswith(specifiy_module) for specifiy_module in self.hook_specifiy_modules):
+                self._set_current_save_path(mode)
+                hook_data = NewHookData(module=module, input=input, output=output)
+                self._save_pt_data(hook_data, mode=mode)
 
     def _save_pt_data(self, data, mode="Forward"):
         counter_dict = {

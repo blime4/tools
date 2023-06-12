@@ -29,9 +29,17 @@ trace_granularity : 0
 
 register_hooks :
   - dump_pt_hook
+  # - Other_hook_strategies_have_not_yet_been_developed
 
+# -------- optional -------- #
 dump_pt_hook_options :
-
+  hook_specifiy_modules:
+    # # if you want to hook only some specifiy modules : you can add to here.
+    # # Example:
+    - bert.embeddings # will only hook all modules which moudle_name is starts with Embedding
+    - Embedding
+    # # TODO： support regular expression
+# -------- optional -------- #
 
 # hacker configuration demo
 
