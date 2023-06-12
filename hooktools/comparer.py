@@ -76,7 +76,7 @@ class Comparer(object):
         if self.compare_mode == 0:
             self.compare_directory()
         elif self.compare_mode == 1:
-            self.compare_file()
+            self.compare_file(self.compared_file_1, self.compared_file_2)
         elif self.compare_mode == 2:
             filelist_1 = get_file_list(
                 path=self.compared_filelist_1, endswith=self.file_type)
@@ -153,9 +153,6 @@ class Comparer(object):
                     self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
-        if not file_path_1 and not file_path_2:
-            file_path_1 = self.compared_file_1
-            file_path_2 = self.compared_file_2
         if self.file_type == "pt":
             if self.verbose:
                 print("file_path_1 ", file_path_1)
