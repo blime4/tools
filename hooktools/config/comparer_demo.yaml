@@ -1,7 +1,6 @@
 # comparer configuration demo
 
 # log configuration
-log_dir: "./tmp"
 comparer_name: "comparer_demo"
 
 compare_non_nn_module : false   # Not yet developed

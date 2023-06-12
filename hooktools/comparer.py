@@ -17,7 +17,6 @@ class Comparer(object):
         config : yaml type configuration
         """
         config = handle_config(config)
-        self.log_dir = config.get('log_dir', "./tmp")
         self.comparer_name = config.get('comparer_name', "")
         self.compare_mode = config.get('compare_mode', 0)
         self.file_type = config.get('file_type', 'pt')
