@@ -2,7 +2,9 @@ import torch
 import os
 import time
 import json
-from hooktools.utils import handle_config, NewHookData
+from hooktools.utils import NewHookData
+from hooktools.utils import handle_config
+from hooktools.utils import is_need_to_filter_specifiy_modules
 from hooktools.hacker import Hacker
 
 class TracerBase(object):
@@ -203,16 +205,7 @@ class DumpPtFileTracer(TracerBase):
             torch.save(data, f)
 
     def _check_if_need_to_save(self, module_name):
-        if not self.hook_specifiy_modules or len(self.hook_specifiy_modules) == 0:
-            return True
-        if "starts_with" in self.hook_specifiy_modules:
-            if any(str(module_name).startswith(specifiy_module) for specifiy_module in self.hook_specifiy_modules["starts_with"]):
-                return True
-        if "regular_expression" in self.hook_specifiy_modules:
-            import re
-            if any(re.match(rf"{pattern}", str(module_name)) for pattern in self.hook_specifiy_modules["regular_expression"]):
-                return True
-        return False
+        return is_need_to_filter_specifiy_modules(module_name, self.hook_specifiy_modules)
 
 
 class Tracer(object):

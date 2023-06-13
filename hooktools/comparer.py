@@ -1,6 +1,8 @@
 import os
-from hooktools.utils import handle_config, get_file_list
 from hooktools.utils import NewHookData
+from hooktools.utils import handle_config
+from hooktools.utils import get_file_list
+from hooktools.utils import is_need_to_filter_specifiy_modules
 import numpy as np
 from tqdm import tqdm
 import torch
@@ -106,7 +108,7 @@ class Comparer(object):
             for folder in folder_pbar:
                 folder_path_1 = os.path.join(self.compared_directory_1, folder)
                 folder_path_2 = os.path.join(self.compared_directory_2, folder)
-                # folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}", refresh=False)
+                folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}", refresh=True)
                 if not self.compare_epochs:
                     epochs = sorted(os.listdir(folder_path_1))
                 else:
@@ -115,7 +117,7 @@ class Comparer(object):
                 # epoch --------------------------------
                 with tqdm(epochs) as epoch_pbar:
                     for epoch in epoch_pbar:
-                        # epoch_pbar.set_description(desc=f"Processing : {epoch}", refresh=False)
+                        epoch_pbar.set_description(desc=f"Processing : {epoch}",  refresh=True)
                         epoch_path_1 = os.path.join(folder_path_1, epoch)
                         epoch_path_2 = os.path.join(folder_path_2, epoch)
 
@@ -128,7 +130,7 @@ class Comparer(object):
                         # step --------------------------------
                         with tqdm(steps) as step_pbar:
                             for step in step_pbar:
-                                # step_pbar.set_description(desc=f"Processing : {step}", refresh=False)
+                                step_pbar.set_description(desc=f"Processing : {step}",  refresh=True)
                                 step_path_1 = os.path.join(epoch_path_1, step)
                                 step_path_2 = os.path.join(epoch_path_2, step)
 
@@ -149,7 +151,7 @@ class Comparer(object):
         elif self.compare_by_order:
             with tqdm(zip(filelist_1, filelist_2)) as file_pbar:
                 for file1, file2 in file_pbar:
-                    # file_pbar.set_description(desc=f"[{file1}]", refresh=False)
+                    # file_pbar.set_description(desc=f"[{file1}]",  refresh=True)
                     self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
@@ -228,6 +230,7 @@ class Evaluator(object):
             self.register_evaluation(
                 "MAPE", self.evaluate_mean_absolute_percentage_error)
         self.filter = Filter(config)
+        self.compare_specifiy_modules = config.get('compare_specifiy_modules', {})
 
     def register_evaluation(self, fn_name, evaluation_fn):
         self.registered_evaluations[fn_name] = evaluation_fn
@@ -337,8 +340,11 @@ class Evaluator(object):
                   "\ndata_2 : ", data_2.module_name)
             print('\n###\n should checked! \n###\n')
 
-        self.evalute_(data_1, data_2)
+        if self._check_if_need_to_compare(data_1.module_name):
+            self.evalute_(data_1, data_2)
 
+    def _check_if_need_to_compare(self, module_name):
+        return is_need_to_filter_specifiy_modules(module_name, self.compare_specifiy_modules)
 
 class Filter(object):
 
@@ -443,8 +449,5 @@ class Filter(object):
         return f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}]"
 
 # TODO:
-# 2. conclusion
-# 3. topk
 # 4. 按照算子, 比较算子的误差，变化
-# 4.1 输入 算子名，获得误差变化
 # 4.2 提供一个函数，可以反复调用

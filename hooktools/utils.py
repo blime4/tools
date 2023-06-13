@@ -53,6 +53,18 @@ def get_classify(module):
     else:
         return "nn.module"
 
+def is_need_to_filter_specifiy_modules(module_name, specifiy_modules_options):
+    if not specifiy_modules_options or len(specifiy_modules_options) == 0:
+        return True
+    if "starts_with" in specifiy_modules_options:
+        if any(str(module_name).startswith(specifiy_module) for specifiy_module in specifiy_modules_options["starts_with"]):
+            return True
+    if "regular_expression" in specifiy_modules_options:
+        import re
+        if any(re.match(rf"{pattern}", str(module_name)) for pattern in specifiy_modules_options["regular_expression"]):
+            return True
+    return False
+
 class NewHookData(nn.Module):
 
     def __init__(self, module,

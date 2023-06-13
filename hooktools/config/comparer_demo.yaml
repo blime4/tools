@@ -30,13 +30,13 @@ compare_directory_options:
   #   - 3
   #   - 4
   compare_folder_name:
-    # - "forward"
+    - "forward"
     - "backward"
     - "gradient"
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/tmp/tracer_demo_1685698986"
-  compared_directory_2: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/dl-tmp-gradient/tracer_demo_1685699474"
+  compared_directory_1: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/nv-tmp/tracer_demo_1685689763"
+  compared_directory_2: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/bert/DeepLearningExamples/PyTorch/LanguageModeling/BERT/dl-tmp/tracer_demo_1685678861"
   compared_directory_1_name: "nv"
   compared_directory_1_name: "dl"
 
@@ -52,6 +52,19 @@ compare_filelist_options :
 verbose: true
 
 compare_by_order : true
+
+# -------- optional -------- #
+compare_specifiy_modules:
+  # if you want to hook only some specifiy modules : you can add to here.
+  # Example:
+  starts_with:
+    - bert.embeddings # will only hook all modules which moudle_name is starts with Embedding
+    - Embedding
+  # or you can use the regular expression
+  regular_expression:
+    - ^LayerNorm.*elementwise_affine=True\)$
+# -------- optional -------- #
+
 
 # evaluator configuration
 evaluation_metrics:
