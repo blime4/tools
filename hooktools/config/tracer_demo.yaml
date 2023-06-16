@@ -1,7 +1,7 @@
 # tracer configuration demo
 
 # log configuration
-log_dir : "./tmp"
+log_dir : "./nv-tmp"
 tracer_name : "tracer_demo"
 
 # trace configuration
@@ -45,6 +45,8 @@ register_hooks :
 # -------- optional -------- #
 
 # hacker configuration demo
+
+verbose : true
 
 hacker_non_nn_modules : false
 hacker_options :

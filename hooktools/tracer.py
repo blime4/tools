@@ -53,6 +53,7 @@ class TracerBase(object):
         self.is_trace = False
         self.trace_granularity = config.get("trace_granularity", 0)
         self.model = model
+        self.verbose = config.get("verbose", False)
 
     def trace(self, epoch=-1, step=-1):
         """
@@ -127,6 +128,12 @@ class TracerBase(object):
             file.write(json.dumps(
                 self.module_name_2_file_path, ensure_ascii=False))
 
+    def update_step(self, step):
+        self.step = step
+
+    def update_epoch(self, epoch):
+        self.epoch=epoch
+
 
 class DumpPtFileTracer(TracerBase):
 
@@ -185,6 +192,8 @@ class DumpPtFileTracer(TracerBase):
 
     def _hook_impl(self, module, input, output, mode="Forward"):
         if self.is_trace:
+            if self.verbose:
+                print(f"[{mode}][epoch_{self.epoch}][step_{self.step}] : {module}")
             if self._check_if_need_to_save(module):
                 self._set_current_save_path(mode)
                 hook_data = NewHookData(module=module, input=input, output=output)
@@ -242,6 +251,14 @@ class Tracer(object):
                 untrace_fn()
         except:
             pass
+
+    def update_step(self, step):
+        if self.dump_pt_hook:
+            self.dump_pt_hook.update_step(step)
+
+    def update_epoch(self, epoch):
+        if self.dump_pt_hook:
+            self.dump_pt_hook.update_epoch(epoch)
 
 
 # think about if we need untrace_gradient api
