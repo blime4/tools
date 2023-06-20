@@ -1,4 +1,5 @@
 import os
+from natsort import natsorted
 from hooktools.utils import NewHookData
 from hooktools.utils import handle_config
 from hooktools.utils import get_file_list
@@ -110,7 +111,7 @@ class Comparer(object):
                 folder_path_2 = os.path.join(self.compared_directory_2, folder)
                 folder_pbar.set_description(desc=f"Processing : {folder_path_1}, {folder_path_2}", refresh=True)
                 if not self.compare_epochs:
-                    epochs = sorted(os.listdir(folder_path_1))
+                    epochs = natsorted(os.listdir(folder_path_1))
                 else:
                     epochs = ["epoch" + str(i) for i in self.compare_epochs]
 
@@ -122,7 +123,7 @@ class Comparer(object):
                         epoch_path_2 = os.path.join(folder_path_2, epoch)
 
                         if not self.compare_steps:
-                            steps = sorted(os.listdir(epoch_path_1))
+                            steps = natsorted(os.listdir(epoch_path_1))
                         else:
                             steps = ["step" + str(i)
                                      for i in self.compare_steps]
@@ -420,7 +421,7 @@ class Filter(object):
 
     def print_topk(self, k=100):
         for fn_name, lst in self.topk_dict.items():
-            sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
+            sorted_lst = natsorted(lst, reverse=True, key=lambda x: x["error"])
             topk_lst = sorted_lst[:k]
             print(f"Top {k} errors for function '{fn_name}':")
             for index, item in enumerate(topk_lst):
