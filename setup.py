@@ -3,6 +3,10 @@ from setuptools import setup, find_packages
 import sys
 python_min_version = (3, 6, 2)
 version_range_max = max(sys.version_info[1], 8) + 1
+
+with open('requirements.txt') as f:
+    required_packages = f.read().splitlines()
+
 setup(
     name="hooktools",
     version="0.1",
@@ -32,6 +36,7 @@ setup(
             "model/*",
         ]
     },
+    install_requires=required_packages,
     license='BSD-3',
     keywords='pytorch machine learning',
 )

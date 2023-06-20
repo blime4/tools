@@ -1,2 +1,2 @@
-natsorted
-transformers
+natsort
+transformers==4.27.1
