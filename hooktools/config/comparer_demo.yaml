@@ -35,10 +35,10 @@ compare_directory_options:
     - "gradient"
   only_compare_input: false
   only_compare_output: false
-  compared_directory_1: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/chatglm-6b/chatglm-6b/tmp/tracer_demo_1686653380"
-  compared_directory_2: "/LocalRun/blime/2_Pytorch/docker/test/debug/model/chatglm-6b/chatglm-6b/dl-tmp/tmp/tracer_demo_1686724736"
-  compared_directory_1_name: "nv"
-  compared_directory_1_name: "dl"
+  compared_directory_1: "/LocalRun/shaobo.xie/2_Pytorch/docker/test/debug/chatglm-6b/dl-spill-tmp/tracer_demo_1687253104"
+  compared_directory_2: "/LocalRun/shaobo.xie/2_Pytorch/docker/test/debug/chatglm-6b/dl-no-spill-tmp/tracer_demo_1687321562"
+  compared_directory_1_name: "spill"
+  compared_directory_1_name: "no-spill"
 
 # ------- compare file
 # compare_file_options :

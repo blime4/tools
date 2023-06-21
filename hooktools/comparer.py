@@ -11,6 +11,8 @@ import torch.nn as nn
 from collections import defaultdict
 from operator import itemgetter
 import transformers
+import atexit
+import signal
 
 
 class Comparer(object):
@@ -165,10 +167,10 @@ class Comparer(object):
     def compare_pt_file(self, file_path_1, file_path_2):
         with open(file_path_1, "rb") as f1:
             f1.seek(0)
-            pt_data_1 = torch.load(f1)
+            pt_data_1 = torch.load(f1, map_location="cpu")
         with open(file_path_2, "rb") as f2:
             f2.seek(0)
-            pt_data_2 = torch.load(f2)
+            pt_data_2 = torch.load(f2, map_location="cpu")
         self.evaluator.evalute(pt_data_1, pt_data_2)
 
     def _check_path_exists(self, path):
@@ -371,6 +373,8 @@ class Filter(object):
 
         self.pretty = ""
         self.state = defaultdict()
+        atexit.register(self.conclusion)
+        signal.signal(signal.SIGINT, self.conclusion)
 
     def push_data(self, data=None, fn_name="", prefix="",  module="", actual=None, desired=None, attr=None):
 
@@ -421,7 +425,7 @@ class Filter(object):
 
     def print_topk(self, k=100):
         for fn_name, lst in self.topk_dict.items():
-            sorted_lst = natsorted(lst, reverse=True, key=lambda x: x["error"])
+            sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
             topk_lst = sorted_lst[:k]
             print(f"Top {k} errors for function '{fn_name}':")
             for index, item in enumerate(topk_lst):
@@ -429,15 +433,14 @@ class Filter(object):
                 print(
                     f"\t{index} = {pretty} {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
 
-    def conclusion(self):
-        # 1. 统计每个module最大的误差 NV 和 DL
-        # 1.1 data.module_name
-        # 2. 统计最大的100个module误差
+    def conclusion(self, k=100):
         import time
-        torch.save(self.topk_dict, "topk"+str(int(time.time()))+".pk")
+        for fn_name, lst in self.topk_dict.items():
+            sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
+            torch.save(sorted_lst[:k], "topk_"+fn_name+str(int(time.time()))+".pk")
         print("\n\n")
         print("conclusion".center(20, '-'))
-        print(self.print_topk())
+        print(self.print_topk(k=k))
 
     def set_state(self, folder, epoch, step):
         self.state = {
