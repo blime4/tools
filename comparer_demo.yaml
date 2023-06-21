@@ -1,0 +1,96 @@
+# comparer configuration demo
+
+# log configuration
+comparer_name: "comparer_demo"
+
+compare_non_nn_module : false   # Not yet developed
+compare_nn_module : true
+
+# compare configuration
+# compare mode:
+# 0 : compare directory
+# 1 : compare file
+# 2 : compare filelist
+compare_mode: 0
+
+# file_type :
+# pt  : pt file
+file_type: "pt"
+
+
+# ------- compare directory
+compare_directory_options:
+  # you can configure which epochs and steps to be compared
+  # if compare_epochs or compare_steps is not set,
+  # default compare all epochs or steps in the compared directory.
+  compare_epochs:
+    # - 0
+  #   - 1
+  compare_steps:
+    - 8
+  #   - 4
+  compare_folder_name:
+    - "forward"
+    - "backward"
+    - "gradient"
+  only_compare_input: false
+  only_compare_output: false
+  compared_directory_1: "/LocalRun/shaobo.xie/2_Pytorch/docker/test/debug/chatglm-6b/dl-spill-tmp/tracer_demo_1687253104"
+  compared_directory_2: "/LocalRun/shaobo.xie/2_Pytorch/docker/test/debug/chatglm-6b/dl-no-spill-tmp/tracer_demo_1687321562"
+  compared_directory_1_name: "spill"
+  compared_directory_1_name: "no-spill"
+
+# ------- compare file
+# compare_file_options :
+#   compared_file_1 : "xxxx"
+#   compared_file_2 : "yyyy"
+
+# ------- compare filelist
+compare_filelist_options :
+  compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683625252"
+  compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683626887"
+verbose: true
+
+compare_by_order : true
+
+# # -------- optional -------- #
+# compare_specifiy_modules:
+#   # if you want to hook only some specifiy modules : you can add to here.
+#   # Example:
+#   starts_with:
+#     - bert.embeddings # will only hook all modules which moudle_name is starts with Embedding
+#     - Embedding
+#   # or you can use the regular expression
+#   regular_expression:
+#     - ^LayerNorm.*elementwise_affine=True\)$
+# # -------- optional -------- #
+
+
+# evaluator configuration
+evaluation_metrics:
+  # you dont need to use all evaluate methods, use what you need.
+  - "L1"        # L1 loss
+  # - "AE"        # absolute error
+  # - "CS"        # cosine similarity
+  # - "MSE"       # mean squared error
+  # - "MAE"       # mean absolute error
+  # - "RMSE"      # root mean squared error
+  # - "MAPE"      # mean absolute percentage error
+
+  # configuration
+  # - "verbose"                 # if comment out this option, some log will ignore
+  # - "skip_nn_module"          # "skip nn.module"
+  # - "skip_non_nn_module"      # "skip non nn.module function"
+
+# filter configuration
+filter:
+  # Only errors greater than xxx_filter are displayed.
+  "global_filter" : 1e-02      # You can set the filters globally, or individually
+  # -----------------------
+  # "L1_filter" : 1e-05
+  # "AE_filter" : 1e-05
+  "CS_filter" : 1.1
+  # "MSE_filter"  : 1e-05
+  # "MAE_filter"  : 1e-05
+  # "RMSE_filter" : 1e-05
+  # "MAPE_filter" : 1e-05
