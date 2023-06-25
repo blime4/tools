@@ -175,6 +175,7 @@ class Comparer(object):
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
+            print(path)
             raise path + "not exists!"
 
     def _get_both_filelist(self, filelist_1, filelist_2):
@@ -182,8 +183,8 @@ class Comparer(object):
         if not filelist_1 or not filelist_2:
             return [], []
 
-        pbl1 = [os.path.basename(pb) for pb in filelist_1]
-        pbl2 = [os.path.basename(pb) for pb in filelist_2]
+        pbl1 = set([os.path.basename(pb) for pb in filelist_1])
+        pbl2 = set([os.path.basename(pb) for pb in filelist_2])
 
         only_in_pb_file_list_1 = pbl1 - pbl2
         only_in_pb_file_list_2 = pbl2 - pbl1
@@ -373,8 +374,10 @@ class Filter(object):
 
         self.pretty = ""
         self.state = defaultdict()
+        self.registersi_signal = config.get('registersi_signal', True)
         atexit.register(self.conclusion)
-        signal.signal(signal.SIGINT, self.conclusion)
+        if self.registersi_signal:
+            signal.signal(signal.SIGINT, self.conclusion)
 
     def push_data(self, data=None, fn_name="", prefix="",  module="", actual=None, desired=None, attr=None):
 

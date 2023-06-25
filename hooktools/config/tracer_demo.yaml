@@ -1,7 +1,7 @@
 # tracer configuration demo
 
 # log configuration
-log_dir : "./nv-tmp"
+log_dir : "./dl-no-spill-tmp"
 tracer_name : "tracer_demo"
 
 # trace configuration

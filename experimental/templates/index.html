@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文件比较</title>
+    <style>
+        pre.output {
+            width: 1500px;
+            height: auto;
+            max-height: 500px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>文件比较</h1>
+    <form id="first_form" action="/" method="POST">
+        <style>
+            label {
+                display: inline-block;
+                width: 600px;
+                margin-bottom: 5px;
+            }
+
+            input[type="text"] {
+                padding: 5px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                width: 300px;
+                margin-bottom: 10px;
+            }
+        </style>
+
+        <script>
+            function checkDirectoryExists(directoryInputId) {
+                var directoryInput = document.getElementById(directoryInputId);
+                var directoryPath = directoryInput.value;
+
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            console.log("文件夹存在");
+                        } else {
+                            console.log("文件夹不存在");
+                            // 在页面上显示提示信息或者其他处理逻辑
+                        }
+                    }
+                };
+                xhr.open("GET", "check_directory_exists.php?directory=" + encodeURIComponent(directoryPath), true);
+                xhr.send();
+            }
+
+            document.addEventListener("DOMContentLoaded", function() {
+                var directoryInput1 = document.getElementById("compared_directory_1");
+                var directoryInput2 = document.getElementById("compared_directory_2");
+
+                directoryInput1.addEventListener("change", function() {
+                    checkDirectoryExists("compared_directory_1");
+                });
+
+                directoryInput2.addEventListener("change", function() {
+                    checkDirectoryExists("compared_directory_2");
+                });
+            });
+        </script>
+
+        <label for="compared_directory_1">文件夹1：</label>
+        <input type="text" name="compared_directory_1" id="compared_directory_1" data-cache="true" value="" /><br>
+
+        <label for="compared_directory_2">文件夹2：</label>
+        <input type="text" name="compared_directory_2" id="compared_directory_2" data-cache="true" value="" /><br>
+
+        <label for="compare_folder_name">文件夹的名字：</label>
+        <select name="compare_folder_name" id="compare_folder_name" data-cache="true" value="" />
+            <option value="forward">forward</option>
+            <option value="backward">backward</option>
+            <option value="gradient">gradient</option>
+        </select><br>
+
+        <label for="compare_epochs">compare_epoch: [目前只支持一个一个epoch对比, 如 -1, 0]</label>
+        <input type="text" name="compare_epochs" id="compare_epochs" data-cache="true" value="" /><br>
+
+        <label for="compare_steps">compare_step: [目前只支持一个一个step对比, 如 -1, 0]</label>
+        <input type="text" name="compare_steps" id="compare_steps" data-cache="true" value="" /><br>
+
+        <label for="evaluation_metrics">比较方法: [L1 | AE | MAE | CS | MSE | RMSE | MAPE] </label>
+        <input type="text" name="evaluation_metrics" id="evaluation_metrics" data-cache="true" value="" /><br>
+
+        <input type="submit" id="compare_button" value="开始比较">
+    </form>
+
+    <h2>输出结果</h2>
+    <pre class="output">{{ output }}</pre>
+
+    <!-- 导出日志文件按钮 -->
+    <form id="second_form" action="/export" method="POST">
+        <input type="hidden" name="output" value="{{ output }}">
+        <input type="hidden" name="epochs_from_first_form" id="epochs_from_first_form" value="">
+        <input type="hidden" name="steps_from_first_form" id="steps_from_first_form" value="">
+        <button type="submit" onclick="showAlert()">导出日志文件</button>
+    </form>
+
+    <!-- 刷新输出结果按钮 -->
+    <button id="refresh-output" onclick="refreshOutput()">刷新输出结果</button>
+
+    <script>
+        // 刷新输出结果
+        function refreshOutput() {
+            var outputElement = document.querySelector('.output');
+            outputElement.textContent = '';  // 将输出结果清空
+        }
+
+        window.onload = function() {
+            var directoryInput1 = document.getElementById('compared_directory_1');
+            var directoryInput2 = document.getElementById('compared_directory_2');
+            var folderNameInput = document.getElementById('compare_folder_name');
+            var epochsInput = document.getElementById('compare_epochs');
+            var stepsInput = document.getElementById('compare_steps');
+            var metricsInput = document.getElementById('evaluation_metrics');
+
+            var savedDirectory1 = localStorage.getItem('directory1');
+            var savedDirectory2 = localStorage.getItem('directory2');
+            var savedFolderName = localStorage.getItem('folderName');
+            var savedEpochs = localStorage.getItem('epochs');
+            var savedSteps = localStorage.getItem('steps');
+            var savedMetrics = localStorage.getItem('metrics');
+
+            var epochsFromFirstForm = document.getElementById("epochs_from_first_form");
+            var stepsFromFirstForm = document.getElementById("steps_from_first_form");
+
+            if (savedDirectory1) {
+                directoryInput1.value = savedDirectory1;
+            }
+
+            if (savedDirectory2) {
+                directoryInput2.value = savedDirectory2;
+            }
+
+            if (savedFolderName) {
+                folderNameInput.value = savedFolderName;
+            }
+
+            if (savedEpochs) {
+                epochsInput.value = savedEpochs;
+            }
+
+            if (savedSteps) {
+                stepsInput.value = savedSteps;
+            }
+
+            if (savedMetrics) {
+                metricsInput.value = savedMetrics;
+            }
+
+            // 按钮点击事件处理函数
+            function startComparison(event) {
+                // 执行比较逻辑，比如发送请求到后端进行比较
+
+                // 将相关参数存储到localStorage中
+                localStorage.setItem('directory1', directoryInput1.value);
+                localStorage.setItem('directory2', directoryInput2.value);
+                localStorage.setItem('folderName', folderNameInput.value);
+                localStorage.setItem('epochs', epochsInput.value);
+                localStorage.setItem('steps', stepsInput.value);
+                localStorage.setItem('metrics', metricsInput.value);
+            }
+
+            var compareButton = document.getElementById('compare_button');
+            compareButton.addEventListener('click', startComparison);
+
+            epochsInput.addEventListener('input', function(){
+                epochsFromFirstForm.value=epochsInput.value;
+            });
+            stepsInput.addEventListener('input', function(){
+                stepsFromFirstForm.value=stepsInput.value;
+            });
+        };
+
+    </script>
+</body>
+</html>
