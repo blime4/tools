@@ -6,16 +6,23 @@ import datetime
 
 app = Flask(__name__, template_folder='templates')
 output = ""  # 输出结果的全局变量
+epochs = []
+steps = []
 
 @app.route('/', methods=['GET', 'POST'])
 def compare_files():
     global output
+    global epochs
+    global steps
     if request.method == 'POST':
         compared_directory_1 = request.form['compared_directory_1']
         compared_directory_2 = request.form['compared_directory_2']
         compare_folder_name = request.form['compare_folder_name']
         compare_epochs = request.form['compare_epochs']
         compare_steps = request.form['compare_steps']
+        # 临时方案：为了保存 log文件， 因为还不太熟悉flask
+        epochs = compare_epochs
+        steps = compare_steps
         # module_name = request.form['module_name']
         evaluation_metrics= request.form['evaluation_metrics']
 
@@ -62,12 +69,14 @@ def compare(actual, desired):
 
 @app.route('/export', methods=['POST'])
 def export_log():
+    global epochs
+    global steps
     output = request.form['output']
-    epoch = request.form['epochs_from_first_form']
-    step = request.form['steps_from_first_form']
+    # epochs = request.form['epochs_from_first_form']
+    # steps = request.form['steps_from_first_form']
 
     # 生成唯一的文件名，例如 "log_20230625_125430.txt"
-    filename = f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{epoch}_{step}.txt"
+    filename = f"log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_epoch{epochs}_step{steps}.txt"
     print("saving to ", filename)
 
     # 将输出结果保存到日志文件

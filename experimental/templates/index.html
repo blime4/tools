@@ -6,7 +6,7 @@
         pre.output {
             width: 1500px;
             height: auto;
-            max-height: 500px;
+            max-height: 400px;
             overflow: auto;
             border: 1px solid #ccc;
             padding: 10px;
@@ -92,18 +92,19 @@
     </form>
 
     <h2>输出结果</h2>
-    <pre class="output">{{ output }}</pre>
-
     <!-- 导出日志文件按钮 -->
     <form id="second_form" action="/export" method="POST">
         <input type="hidden" name="output" value="{{ output }}">
-        <input type="hidden" name="epochs_from_first_form" id="epochs_from_first_form" value="">
-        <input type="hidden" name="steps_from_first_form" id="steps_from_first_form" value="">
         <button type="submit" onclick="showAlert()">导出日志文件</button>
     </form>
+        <!-- input type="hidden" name="epochs_from_first_form" id="epochs_from_first_form" value="" -->
+        <!-- input type="hidden" name="steps_from_first_form" id="steps_from_first_form" value="" -->
 
     <!-- 刷新输出结果按钮 -->
     <button id="refresh-output" onclick="refreshOutput()">刷新输出结果</button>
+
+    <pre class="output">{{ output }}</pre>
+
 
     <script>
         // 刷新输出结果
@@ -127,8 +128,8 @@
             var savedSteps = localStorage.getItem('steps');
             var savedMetrics = localStorage.getItem('metrics');
 
-            var epochsFromFirstForm = document.getElementById("epochs_from_first_form");
-            var stepsFromFirstForm = document.getElementById("steps_from_first_form");
+            // var epochsFromFirstForm = document.getElementById("epochs_from_first_form");
+            // var stepsFromFirstForm = document.getElementById("steps_from_first_form");
 
             if (savedDirectory1) {
                 directoryInput1.value = savedDirectory1;
@@ -170,12 +171,12 @@
             var compareButton = document.getElementById('compare_button');
             compareButton.addEventListener('click', startComparison);
 
-            epochsInput.addEventListener('input', function(){
-                epochsFromFirstForm.value=epochsInput.value;
-            });
-            stepsInput.addEventListener('input', function(){
-                stepsFromFirstForm.value=stepsInput.value;
-            });
+            // epochsInput.addEventListener('input', function(){
+            //     epochsFromFirstForm.value=epochsInput.value;
+            // });
+            // stepsInput.addEventListener('input', function(){
+            //     stepsFromFirstForm.value=stepsInput.value;
+            // });
         };
 
     </script>
