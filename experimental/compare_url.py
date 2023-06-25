@@ -1,19 +1,23 @@
-from flask import Flask, request, render_template, send_file
+from flask import Flask, request, render_template, send_file, jsonify
 from hooktools import Comparer
 from hooktools.utils import ConfigFromFlask
 import os
 import datetime
+import torch
 
 app = Flask(__name__, template_folder='templates')
 output = ""  # 输出结果的全局变量
 epochs = []
 steps = []
 
+global_comparer = None
+
 @app.route('/', methods=['GET', 'POST'])
 def compare_files():
     global output
     global epochs
     global steps
+    global global_comparer
     if request.method == 'POST':
         compared_directory_1 = request.form['compared_directory_1']
         compared_directory_2 = request.form['compared_directory_2']
@@ -42,30 +46,11 @@ def compare_files():
         import io
         import contextlib
         with io.StringIO() as buffer, contextlib.redirect_stdout(buffer):
-            comparer = Comparer(config())
-            comparer.compare()
+            global_comparer = Comparer(config())
+            global_comparer.compare()
             output = buffer.getvalue()
 
     return render_template('index.html', output=output)
-
-
-def compare(actual, desired):
-
-    def evaluate_l1_loss(actual, desired):
-        # siyi's way
-        try:
-            actual = actual.cpu() if actual.is_cuda else actual
-            desired = desired.cpu() if desired.is_cuda else desired
-            l1_error = (actual - desired).float().abs().mean()
-            rel_error = l1_error / (actual.abs().float().mean())
-            if l1_error * rel_error > 10:
-                print('\n###\n', 'should checked!', '\n###\n')
-            return (l1_error.detach(), rel_error.detach())
-
-        except Exception as e:
-            print("ERROR : ", e)
-            raise "failed."
-    return evaluate_l1_loss(actual, desired)
 
 @app.route('/export', methods=['POST'])
 def export_log():
@@ -85,6 +70,41 @@ def export_log():
 
     return send_file(filename, as_attachment=True)
 
+@app.route('/get_conclusion', methods=['GET'])
+def get_conclusion():
+    if global_comparer is None:
+        return find_latest_conclusion_file()
+    return global_comparer.evaluator.filter.get_latest_conclusion_pk_filename()
+
+def find_latest_conclusion_file():
+    import glob
+    current_path = os.getcwd()
+    file_list = glob.glob(os.path.join(current_path, 'topk*pk'))
+    if not file_list:
+        return None
+    latest_file = max(file_list, key=os.path.getmtime)
+    return latest_file
+
+@app.route('/analyze_conclusion', methods=['POST'])
+def analyze_conclusion():
+    data = request.get_json()
+    conclusion_file_path = data['conclusionFilePath']
+    topk = data.get('topk', None)
+    seq = data.get('seq', None)
+
+    data = torch.load(conclusion_file_path)
+    if topk is not None:
+        data = data[:topk]
+    if seq is not None:
+        data = data[seq]
+
+    import pandas as pd
+    df = pd.DataFrame(data)
+    excel_file_path = f'{os.path.splitext(os.path.basename(conclusion_file_path))[0]}.xlsx'
+
+    df.to_excel(excel_file_path, index=False)
+    print(df)
+    return jsonify({'result': data.__repr__()})
 
 if __name__ == '__main__':
     app.run(debug=True)

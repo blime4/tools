@@ -375,6 +375,7 @@ class Filter(object):
         self.pretty = ""
         self.state = defaultdict()
         self.registersi_signal = config.get('registersi_signal', True)
+        self.latest_conclusion_pk_filename = ""
         atexit.register(self.conclusion)
         if self.registersi_signal:
             signal.signal(signal.SIGINT, self.conclusion)
@@ -436,11 +437,13 @@ class Filter(object):
                 print(
                     f"\t{index} = {pretty} {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
 
-    def conclusion(self, k=100):
-        import time
-        for fn_name, lst in self.topk_dict.items():
-            sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
-            torch.save(sorted_lst[:k], "topk_"+fn_name+str(int(time.time()))+".pk")
+    def conclusion(self, k=100, save_pk=True):
+        if save_pk:
+            import time
+            for fn_name, lst in self.topk_dict.items():
+                sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
+                self.latest_conclusion_pk_filename = "topk_"+fn_name+"_"+str(int(time.time()))+".pk"
+                torch.save(sorted_lst[:k], self.latest_conclusion_pk_filename)
         print("\n\n")
         print("conclusion".center(20, '-'))
         print(self.print_topk(k=k))
@@ -454,6 +457,9 @@ class Filter(object):
 
     def get_pretty_state(self):
         return f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}]"
+
+    def get_latest_conclusion_pk_filename(self):
+        return self.latest_conclusion_pk_filename
 
 # TODO:
 # 4. 按照算子, 比较算子的误差，变化

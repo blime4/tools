@@ -1,3 +1,5 @@
 natsort
 transformers==4.27.1
 flask
+pandas
+openpyxl
