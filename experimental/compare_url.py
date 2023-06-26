@@ -1,9 +1,38 @@
 from flask import Flask, request, render_template, send_file, jsonify
 from hooktools import Comparer
-from hooktools.utils import ConfigFromFlask
+# from hooktools.utils import ConfigFromFlask
 import os
 import datetime
 import torch
+
+class ConfigFromFlask(object):
+
+    def __init__(self,
+                 compared_directory_1,
+                 compared_directory_2,
+                 compare_folder_name,
+                 compare_epochs,
+                 compare_steps,
+                 evaluation_metrics,
+                 filter,
+                 ) -> None:
+        self.compare_directory_options = {
+            'compared_directory_1':compared_directory_1,
+            'compared_directory_2':compared_directory_2,
+            'compare_folder_name':compare_folder_name,
+            'compare_epochs':[compare_epochs],
+            'compare_steps':[compare_steps],
+        }
+        self.evaluation_metrics=[evaluation_metrics]
+        self.registersi_signal=False
+        self.filter = {
+            "global_filter":filter,
+        }
+        self.compare_by_order=True
+
+    def __call__(self):
+        print("For debug : ConfigFromFlask : ", vars(self))
+        return vars(self)
 
 app = Flask(__name__, template_folder='templates')
 output = ""  # 输出结果的全局变量
@@ -24,7 +53,8 @@ def compare_files():
         compare_folder_name = request.form['compare_folder_name']
         compare_epochs = request.form['compare_epochs']
         compare_steps = request.form['compare_steps']
-        # 临时方案：为了保存 log文件， 因为还不太熟悉flask
+        filter = request.form['filter_number']
+        # TODO: 临时方案：为了保存 log文件， 因为还不太熟悉flask
         epochs = compare_epochs
         steps = compare_steps
         # module_name = request.form['module_name']
@@ -38,6 +68,7 @@ def compare_files():
             compare_steps=compare_steps,
             # module_name=module_name,
             evaluation_metrics=evaluation_metrics,
+            filter=filter,
         )
 
         if not os.path.exists(compared_directory_1) or not os.path.exists(compared_directory_2):

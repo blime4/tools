@@ -115,27 +115,3 @@ class NewHookData(nn.Module):
             r += f",\n timestamp     \t: {self.timestamp}"
             r += f",\n tag           \t: {self.tag}"
         return r
-
-class ConfigFromFlask(object):
-
-    def __init__(self,
-                 compared_directory_1,
-                 compared_directory_2,
-                 compare_folder_name,
-                 compare_epochs,
-                 compare_steps,
-                 evaluation_metrics,
-                 ) -> None:
-        self.compare_directory_options = {
-            'compared_directory_1':compared_directory_1,
-            'compared_directory_2':compared_directory_2,
-            'compare_folder_name':compare_folder_name,
-            'compare_epochs':[compare_epochs],
-            'compare_steps':[compare_steps],
-        }
-        self.evaluation_metrics=[evaluation_metrics]
-        self.registersi_signal=False
-
-    def __call__(self):
-        print("For debug : ConfigFromFlask : ", vars(self))
-        return vars(self)

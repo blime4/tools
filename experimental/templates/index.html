@@ -27,7 +27,7 @@
                 padding: 5px;
                 border: 1px solid #ccc;
                 border-radius: 4px;
-                width: 300px;
+                width: 1000px;
                 margin-bottom: 10px;
             }
         </style>
@@ -88,6 +88,9 @@
         <label for="evaluation_metrics">比较方法: [L1 | AE | MAE | CS | MSE | RMSE | MAPE] </label>
         <input type="text" name="evaluation_metrics" id="evaluation_metrics" data-cache="true" value="" /><br>
 
+        <label for="filter_number">过滤阈值</label>
+        <input type="text" name="filter_number" id="filter_number" data-cache="true" value="" /><br>
+
         <input type="submit" id="compare_button" value="开始比较">
     </form>
 
@@ -120,6 +123,7 @@
             var epochsInput = document.getElementById('compare_epochs');
             var stepsInput = document.getElementById('compare_steps');
             var metricsInput = document.getElementById('evaluation_metrics');
+            var filterInput = document.getElementById('filter_number');
 
             var savedDirectory1 = localStorage.getItem('directory1');
             var savedDirectory2 = localStorage.getItem('directory2');
@@ -127,6 +131,7 @@
             var savedEpochs = localStorage.getItem('epochs');
             var savedSteps = localStorage.getItem('steps');
             var savedMetrics = localStorage.getItem('metrics');
+            var savedFilter = localStorage.getItem('filter');
 
             // var epochsFromFirstForm = document.getElementById("epochs_from_first_form");
             // var stepsFromFirstForm = document.getElementById("steps_from_first_form");
@@ -155,6 +160,10 @@
                 metricsInput.value = savedMetrics;
             }
 
+            if (savedFilter) {
+                filterInput.value = savedFilter;
+            }
+
             // 按钮点击事件处理函数
             function startComparison(event) {
                 // 执行比较逻辑，比如发送请求到后端进行比较
@@ -166,6 +175,7 @@
                 localStorage.setItem('epochs', epochsInput.value);
                 localStorage.setItem('steps', stepsInput.value);
                 localStorage.setItem('metrics', metricsInput.value);
+                localStorage.setItem('filter', filterInput.value);
             }
 
             var compareButton = document.getElementById('compare_button');

@@ -71,6 +71,7 @@ class Comparer(object):
         self.compare_by_order = config.get("compare_by_order", False)
         self.compare_both_file = not self.compare_by_order or config.get(
             "compare_both_file", False)
+        self.current_files = ()
         self.verbose = compare_options.get('verbose', False)
         if self.verbose:
             print(config)
@@ -171,7 +172,13 @@ class Comparer(object):
         with open(file_path_2, "rb") as f2:
             f2.seek(0)
             pt_data_2 = torch.load(f2, map_location="cpu")
+        self.set_current_files((file_path_1, file_path_2))
         self.evaluator.evalute(pt_data_1, pt_data_2)
+
+    def set_current_files(self, current_files):
+        self.current_files = current_files
+        self.evaluator.current_files = current_files
+        self.evaluator.filter.current_files = current_files
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -188,7 +195,7 @@ class Comparer(object):
 
         only_in_pb_file_list_1 = pbl1 - pbl2
         only_in_pb_file_list_2 = pbl2 - pbl1
-        both_pb_file_list = pbl1 | pbl2
+        both_pb_file_list = sorted(list(pbl1 | pbl2))
 
         if only_in_pb_file_list_1 != set():
             print("These files exist only in pb_file_list_1 : ",
@@ -215,6 +222,7 @@ class Evaluator(object):
         self.skip_nn_module = 'skip_nn_module' in self.evaluation_metrics
         self.skip_non_nn_module = 'skip_non_nn_module' in self.evaluation_metrics
         self.current_module = ""
+        self.current_files = ()
 
         self.registered_evaluations = dict()
         if "L1" in self.evaluation_metrics:
@@ -263,7 +271,7 @@ class Evaluator(object):
             l1_error = (actual - desired).float().abs().mean()
             rel_error = l1_error / (actual.abs().float().mean())
             if l1_error * rel_error > 10:
-                print('\n###\n', 'should checked!', '\n###\n')
+                print(f'\n###\n should checked! : l1_error * rel_error > 10, current_module is : [{self.current_module}] , {self.filter.get_detail()}\n###\n')
             return (l1_error.detach(), rel_error.detach())
 
         except Exception as e:
@@ -279,6 +287,7 @@ class Evaluator(object):
 
         if isinstance(actual, NewHookData):
             assert actual.module_name==desired.module_name, f"module_name must be same : actual : {actual.module_name} , desired : {desired.module_name}"
+            self.current_module = actual.module_name
             if hasattr(actual, "input"):
                 self.evalute_(actual.input, desired.input, prefix+'[  input ]')
             if hasattr(actual, "output"):
@@ -290,13 +299,18 @@ class Evaluator(object):
             if hasattr(actual, "gradient_grad"):
                 self.evalute_(actual.gradient_grad,
                               desired.gradient_grad, prefix+'[gradient_grad]')
-            self.current_module = actual.module_name
         elif isinstance(actual, torch.Tensor):
             for fn_name, evaluation_fn in self.registered_evaluations.items():
                 if not torch.is_floating_point(actual):
                     actual = actual.double()
                     desired = desired.double()
                 error = evaluation_fn(actual, desired)
+                self.filter.set_prefix(prefix)
+                if self.current_module is None or self.current_module == "":
+                    print(f'For debug : self.current_module == "" in here.!!!!, detail is {self.filter.get_detail()}.')
+                    print('actual is : ', actual)
+                    print('desired is : ', desired)
+
                 self.filter.push_data(
                     error, fn_name, prefix, self.current_module, actual, desired)
 
@@ -319,7 +333,7 @@ class Evaluator(object):
         elif isinstance(actual, (int, float, bool, str)):
             # non nn.module will have some input, ouput data, which type in (int, float, bool, str)
             if (actual != desired or self.verbose):
-                print(prefix, "\nactual:\t", actual, "\ndesired:\t", desired)
+                print("[underlying type data not match]", prefix, "\nactual:\t", actual, "\ndesired:\t", desired)
         else:
             if actual is None and desired is None:
                 pass
@@ -340,9 +354,11 @@ class Evaluator(object):
             if self.verbose:
                 print("module_name: ", data_1.module_name)
         else:
+            print(self.filter.get_detail())
             print("module_name: \ndata_1 :", data_1.module_name,
                   "\ndata_2 : ", data_2.module_name)
-            print('\n###\n should checked! \n###\n')
+            print(f"current_files is : {self.current_files}.")
+            raise f'\n###\n should checked!: module_name not match \n###\n'
 
         if self._check_if_need_to_compare(data_1.module_name):
             self.evalute_(data_1, data_2)
@@ -372,7 +388,9 @@ class Filter(object):
             "compared_directory_2_name", "")
         self.topk_dict = defaultdict(list)
 
-        self.pretty = ""
+        self.detail = ""
+        self.prefix = ""
+        self.current_files = ()
         self.state = defaultdict()
         self.registersi_signal = config.get('registersi_signal', True)
         self.latest_conclusion_pk_filename = ""
@@ -398,10 +416,10 @@ class Filter(object):
                 filter_error = None
 
             if filter_error is None or max_data > filter_error:
-                pretty = self.get_pretty_state()+prefix
+                self.detail = self.get_detail()
                 data_to_print = max_data if self.show_max_error_only else data
                 print("{}[{}] : {}".format(
-                    pretty, fn_name, data_to_print), end='\n')
+                    self.detail, fn_name, data_to_print), end='\n')
 
                 self.print_raw_data(module, actual, desired)
                 # todo : think about max_data or data
@@ -410,6 +428,8 @@ class Filter(object):
     def print_raw_data(self, module, actual, desired):
         print("-------↓")
         print(f"[module] : {module}")
+        if module is None or module == "":
+            print(f"something error. in {self.get_detail()}, module is None")
         print(f"[actual] : {actual}")
         print(f"[desired] : {desired}")
         print("-------↑\n")
@@ -423,7 +443,7 @@ class Filter(object):
                 "error": error,
                 "actual": actual,
                 "desired": desired,
-                "pretty": self.get_pretty_state()
+                "detail": self.get_detail()
             }
         )
 
@@ -433,9 +453,9 @@ class Filter(object):
             topk_lst = sorted_lst[:k]
             print(f"Top {k} errors for function '{fn_name}':")
             for index, item in enumerate(topk_lst):
-                module, error, actual, desired, pretty = item["module"], item["error"], item["actual"], item["desired"], item["pretty"]
+                module, error, actual, desired, detail = item["module"], item["error"], item["actual"], item["desired"], item["detail"]
                 print(
-                    f"\t{index} = {pretty} {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
+                    f"\t{index} = {detail}\n {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
 
     def conclusion(self, k=100, save_pk=True):
         if save_pk:
@@ -455,8 +475,11 @@ class Filter(object):
             "step": step,
         }
 
-    def get_pretty_state(self):
-        return f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}]"
+    def set_prefix(self, prefix):
+        self.prefix = prefix
+
+    def get_detail(self):
+        return f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}][{self.prefix}][{self.current_files}]"
 
     def get_latest_conclusion_pk_filename(self):
         return self.latest_conclusion_pk_filename
@@ -464,3 +487,4 @@ class Filter(object):
 # TODO:
 # 4. 按照算子, 比较算子的误差，变化
 # 4.2 提供一个函数，可以反复调用
+# 5 将Filter，Evaluator，Comparer 改成继承关系，增加一个Detail类来记录状态。
