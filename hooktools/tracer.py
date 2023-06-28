@@ -185,21 +185,13 @@ class DumpPtFileTracer(TracerBase):
         for name, param in self.model.named_parameters():
             if param is not None:
                 if self._check_if_need_to_save(name):
-                    self._set_current_save_path("Gradient")
-                    hook_data = NewHookData(module=name, gradient=param, gradient_grad=param.grad)
-                    self._save_pt_data(hook_data, mode="Gradient")
-                    # print(f"[epoch-{epoch}][step-{step}][grad] : {param.grad}")
+                    mode="Gradient"
+                    self._set_current_save_path(mode)
+                    pt_file = self._get_current_save_file(mode)
+                    hook_data = NewHookData(module=name, gradient=param, gradient_grad=param.grad, pt_file=pt_file)
+                    self._save_pt_data(hook_data, pt_file)
 
-    def _hook_impl(self, module, input, output, mode="Forward"):
-        if self.is_trace:
-            if self.verbose:
-                print(f"[{mode}][epoch_{self.epoch}][step_{self.step}] : {module}")
-            if self._check_if_need_to_save(module):
-                self._set_current_save_path(mode)
-                hook_data = NewHookData(module=module, input=input, output=output)
-                self._save_pt_data(hook_data, mode=mode)
-
-    def _save_pt_data(self, data, mode="Forward"):
+    def _get_current_save_file(self, mode="Forward"):
         counter_dict = {
             "Forward": "save_forward_number",
             "Backward": "save_backward_number",
@@ -209,6 +201,19 @@ class DumpPtFileTracer(TracerBase):
         pt_file = os.path.join(self.current_save_path, mode.lower() +
                             "_" + str(counter).zfill(6) + ".pt")
         setattr(self, counter_dict[mode], counter + 1)
+        return pt_file
+
+    def _hook_impl(self, module, input, output, mode="Forward"):
+        if self.is_trace:
+            if self.verbose:
+                print(f"[{mode}][epoch_{self.epoch}][step_{self.step}] : {module}")
+            if self._check_if_need_to_save(module):
+                self._set_current_save_path(mode)
+                pt_file = self._get_current_save_file(mode)
+                hook_data = NewHookData(module=module, input=input, output=output, pt_file=pt_file)
+                self._save_pt_data(hook_data, pt_file)
+
+    def _save_pt_data(self, data, pt_file):
         with open(pt_file, "wb+") as f:
             self._save_module_name_file_path_map(data.module_name, pt_file)
             torch.save(data, f)

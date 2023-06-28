@@ -3,3 +3,4 @@ transformers==4.27.1
 flask
 pandas
 openpyxl
+urllib3==1.26.14

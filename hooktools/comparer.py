@@ -47,9 +47,6 @@ class Comparer(object):
                 'compared_directory_1')
             self.compared_directory_2 = compare_options.get(
                 'compared_directory_2')
-            self._check_path_exists(self.compared_directory_1)
-            self._check_path_exists(self.compared_directory_2)
-
             self.compare_folder_name = compare_options.get(
                 'compare_folder_name', [])
 
@@ -80,6 +77,8 @@ class Comparer(object):
 
     def compare(self):
         if self.compare_mode == 0:
+            self._check_path_exists(self.compared_directory_1)
+            self._check_path_exists(self.compared_directory_2)
             self.compare_directory()
         elif self.compare_mode == 1:
             self.compare_file(self.compared_file_1, self.compared_file_2)
@@ -479,7 +478,11 @@ class Filter(object):
         self.prefix = prefix
 
     def get_detail(self):
-        return f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}][{self.prefix}][{self.current_files}]"
+        try:
+            r = f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}]"
+        except:
+            r = ""
+        return r+f"[{self.prefix}][{self.current_files}]"
 
     def get_latest_conclusion_pk_filename(self):
         return self.latest_conclusion_pk_filename

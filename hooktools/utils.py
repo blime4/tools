@@ -8,6 +8,7 @@ import yaml
 from pathlib import Path
 import time
 import torch.nn as nn
+from collections import defaultdict
 
 def check_suffix(file="demo.yaml", suffix=('.yaml,'), msg=''):
     # Check file(s) for acceptable suffix
@@ -71,10 +72,16 @@ class NewHookData(nn.Module):
                  input=None, input_grad=None,
                  output=None, output_grad=None,
                  gradient=None, gradient_grad=None,
+                 pt_file=None,
                  tag="", formal=False):
         super(NewHookData, self).__init__()
         self.module_name = str(module)
         self.formal = formal
+        self.pt_file = pt_file
+        self.have_children = len(list(module.children()))>0
+        self.ast_tree = None
+        if self.have_children:
+            self.ast_tree = self.get_sublayers(module)
 
         if input is not None:
             self.input = input
@@ -96,6 +103,7 @@ class NewHookData(nn.Module):
 
     def __repr__(self) -> str:
         r = f"module_name    \t: {self.module_name}"
+        r += f",\n pt_file   \t: {self.pt_file}"
         if hasattr(self, 'input'):
             r += f",\n input.type    \t: {type(self.input)}"
         if hasattr(self, 'output'):
@@ -115,3 +123,11 @@ class NewHookData(nn.Module):
             r += f",\n timestamp     \t: {self.timestamp}"
             r += f",\n tag           \t: {self.tag}"
         return r
+
+    def get_sublayers(self, layer):
+        sublayers = defaultdict(list)
+        for name, module in layer.named_children():
+            sublayers[name].append(str(module))
+            if len(list(module.children())) > 0:
+                sublayers[name].append(self. get_sublayers(module))
+        return sublayers
