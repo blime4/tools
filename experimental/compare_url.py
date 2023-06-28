@@ -1,11 +1,13 @@
 from flask import Flask, request, render_template, send_file, jsonify
 from hooktools import Comparer
-# from hooktools.utils import ConfigFromFlask
+
 import os
 import datetime
 import torch
+import io
+import contextlib
 
-class ConfigFromFlask(object):
+class DirectorysConfig(object):
 
     def __init__(self,
                  compared_directory_1,
@@ -31,7 +33,31 @@ class ConfigFromFlask(object):
         self.compare_by_order=True
 
     def __call__(self):
-        print("For debug : ConfigFromFlask : ", vars(self))
+        print("For debug : DirectorysConfig : ", vars(self))
+        return vars(self)
+
+class FilesConfig(object):
+    def __init__(self,
+                 compared_file_1,
+                 compared_file_2,
+                 evaluation_metrics,
+                 filter,
+                 ) -> None:
+        self.compare_file_options = {
+            'compared_file_1':compared_file_1,
+            'compared_file_2':compared_file_2,
+        }
+        self.evaluation_metrics=[evaluation_metrics]
+        self.registersi_signal=False
+        self.filter = {
+            "global_filter":filter,
+        }
+        self.compare_by_order=True
+        self.compare_mode = 1
+        self.auto_conclusion = False
+
+    def __call__(self):
+        print("For debug : FilesConfig : ", vars(self))
         return vars(self)
 
 app = Flask(__name__, template_folder='templates')
@@ -39,14 +65,15 @@ output = ""  # 输出结果的全局变量
 epochs = []
 steps = []
 
-global_comparer = None
+global_directorys_comparer = None
+global_files_comparer = None
 
 @app.route('/', methods=['GET', 'POST'])
-def compare_files():
+def compare_directorys():
     global output
     global epochs
     global steps
-    global global_comparer
+    global global_directorys_comparer
     if request.method == 'POST':
         compared_directory_1 = request.form['compared_directory_1']
         compared_directory_2 = request.form['compared_directory_2']
@@ -60,13 +87,12 @@ def compare_files():
         # module_name = request.form['module_name']
         evaluation_metrics= request.form['evaluation_metrics']
 
-        config = ConfigFromFlask(
+        config = DirectorysConfig(
             compared_directory_1=compared_directory_1,
             compared_directory_2=compared_directory_2,
             compare_folder_name=compare_folder_name,
             compare_epochs=compare_epochs,
             compare_steps=compare_steps,
-            # module_name=module_name,
             evaluation_metrics=evaluation_metrics,
             filter=filter,
         )
@@ -74,11 +100,9 @@ def compare_files():
         if not os.path.exists(compared_directory_1) or not os.path.exists(compared_directory_2):
             return render_template('error.html', message='指定的文件夹不存在')
 
-        import io
-        import contextlib
         with io.StringIO() as buffer, contextlib.redirect_stdout(buffer):
-            global_comparer = Comparer(config())
-            global_comparer.compare()
+            global_directorys_comparer = Comparer(config())
+            global_directorys_comparer.compare()
             output = buffer.getvalue()
 
     return render_template('index.html', output=output)
@@ -102,9 +126,9 @@ def export_log():
     return send_file(filename, as_attachment=True)
 
 def get_conclusion_pk_file():
-    if global_comparer is None:
+    if global_directorys_comparer is None:
         return find_latest_conclusion_file()
-    return global_comparer.get_latest_conclusion_pk_filename()
+    return global_directorys_comparer.get_latest_conclusion_pk_filename()
 
 def find_latest_conclusion_file():
     import glob
@@ -117,11 +141,9 @@ def find_latest_conclusion_file():
 
 @app.route('/get_conclusion', methods=['GET'])
 def get_conclusion():
-    if global_comparer is not None:
-        import io
-        import contextlib
+    if global_directorys_comparer is not None:
         with io.StringIO() as buffer, contextlib.redirect_stdout(buffer):
-            global_comparer.conclusion(save_pk=False)
+            global_directorys_comparer.conclusion(save_pk=False)
             return buffer.getvalue()
     else:
         return "Global comparer is None."
@@ -146,6 +168,72 @@ def analyze_conclusion():
     df.to_excel(excel_file_path, index=False)
     print(df)
     return jsonify({'result': data.__repr__()})
+
+def get_neighbor_file(file, offset):
+    file_dir = os.path.dirname(file)
+    file_name = os.path.basename(file)
+
+    file_number = int(file_name.split('_')[-1].split('.')[0])
+    neighbor_number = file_number + offset
+
+    neighbor_file_name = file_name.replace(str(file_number).zfill(6), str(neighbor_number).zfill(6))
+
+    neighbor_file_path = os.path.join(file_dir, neighbor_file_name)
+
+    if os.path.exists(neighbor_file_path):
+        return neighbor_file_path
+    else:
+        parent_path = os.path.abspath(os.path.dirname(os.path.dirname(file)))
+        sub_dirs = [os.path.join(parent_path, path) for path in os.listdir(parent_path)]
+        for sub_dir in sub_dirs:
+            if os.path.isdir(sub_dir):
+                neighbor_file_path = os.path.join(sub_dir, neighbor_file_name)
+
+                if os.path.exists(neighbor_file_path):
+                    return neighbor_file_path
+
+    return None
+def get_previous_file(file):
+    return get_neighbor_file(file, -1)
+
+def get_next_file(file):
+    return get_neighbor_file(file, 1)
+
+@app.route('/compare_files', methods=['GET', 'POST'])
+def compare_files():
+    global global_files_comparer
+    if request.method == 'POST':
+        compared_file_1 = request.form.get('compared_file_1')
+        compared_file_2 = request.form.get('compared_file_2')
+        file_evaluation_metrics = request.form.get('file_evaluation_metrics')
+        file_filter_number = request.form.get('file_filter_number')
+
+        if 'compare_file_button' in request.form:
+            pass
+        elif 'compare_previous_file_button' in request.form:
+            compared_file_1 = get_previous_file(compared_file_1)
+            compared_file_2 = get_previous_file(compared_file_2)
+        elif 'compare_next_file_button' in request.form:
+            compared_file_1 = get_next_file(compared_file_1)
+            compared_file_2 = get_next_file(compared_file_2)
+
+        config = FilesConfig(
+            compared_file_1=compared_file_1,
+            compared_file_2=compared_file_2,
+            evaluation_metrics=file_evaluation_metrics,
+            filter=file_filter_number,
+        )
+        global_files_comparer = Comparer(config())
+        with io.StringIO() as buffer, contextlib.redirect_stdout(buffer):
+            global_files_comparer.compare()
+            file_output = buffer.getvalue()
+
+        return render_template('index.html', file_output=file_output, compared_file_1=compared_file_1,
+                               compared_file_2=compared_file_2, file_evaluation_metrics=file_evaluation_metrics,
+                               file_filter_number=file_filter_number)
+    else:
+        return render_template('index.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

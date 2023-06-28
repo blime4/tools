@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>文件比较</title>
+    <title>比较</title>
     <style>
         pre.output {
+            width: 1500px;
+            height: auto;
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        pre.file_output {
             width: 1500px;
             height: auto;
             max-height: 400px;
@@ -14,7 +22,7 @@
     </style>
 </head>
 <body>
-    <h1>文件比较</h1>
+    <h1>文件夹比较</h1>
     <form id="first_form" action="/" method="POST">
         <style>
             label {
@@ -206,5 +214,41 @@
         };
 
     </script>
+
+    <h1>文件比较</h1>
+    <form id="third_form" action="/compare_files" method="POST">
+        <style>
+            label {
+                display: inline-block;
+                width: 600px;
+                margin-bottom: 5px;
+            }
+
+            input[type="text"] {
+                padding: 5px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                width: 1000px;
+                margin-bottom: 10px;
+            }
+        </style>
+
+        <label for="compared_file_1">文件1：</label>
+        <input type="text" name="compared_file_1" id="compared_file_1" data-cache="true" value="{{compared_file_1}}" /><br>
+
+        <label for="compared_file_2">文件2：</label>
+        <input type="text" name="compared_file_2" id="compared_file_2" data-cache="true" value="{{compared_file_2}}" /><br>
+
+        <label for="file_evaluation_metrics">比较方法: [L1 | AE | MAE | CS | MSE | RMSE | MAPE] </label>
+        <input type="text" name="file_evaluation_metrics" id="file_evaluation_metrics" data-cache="true" value="{{file_evaluation_metrics}}" /><br>
+
+        <label for="file_filter_number">过滤阈值</label>
+        <input type="text" name="file_filter_number" id="file_filter_number" data-cache="true" value="{{file_filter_number}}" /><br>
+
+        <input type="submit" id="compare_file_button" name="compare_file_button" value="开始比较">
+        <input type="submit" id="compare_previous_file_button", name="compare_previous_file_button" value="比较上一个文件">
+        <input type="submit" id="compare_next_file_button", name="compare_next_file_button" value="比较下一个文件">
+    </form>
+    <pre class="file_output">{{ file_output }}</pre>
 </body>
 </html>
