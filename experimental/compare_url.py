@@ -101,11 +101,10 @@ def export_log():
 
     return send_file(filename, as_attachment=True)
 
-@app.route('/get_conclusion', methods=['GET'])
-def get_conclusion():
+def get_conclusion_pk_file():
     if global_comparer is None:
         return find_latest_conclusion_file()
-    return global_comparer.evaluator.filter.get_latest_conclusion_pk_filename()
+    return global_comparer.get_latest_conclusion_pk_filename()
 
 def find_latest_conclusion_file():
     import glob
@@ -115,6 +114,17 @@ def find_latest_conclusion_file():
         return None
     latest_file = max(file_list, key=os.path.getmtime)
     return latest_file
+
+@app.route('/get_conclusion', methods=['GET'])
+def get_conclusion():
+    if global_comparer is not None:
+        import io
+        import contextlib
+        with io.StringIO() as buffer, contextlib.redirect_stdout(buffer):
+            global_comparer.conclusion(save_pk=False)
+            return buffer.getvalue()
+    else:
+        return "Global comparer is None."
 
 @app.route('/analyze_conclusion', methods=['POST'])
 def analyze_conclusion():
