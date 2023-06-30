@@ -328,6 +328,7 @@ class Comparer(Evaluator):
         """
         config : yaml type configuration
         """
+        super().__init__(config)
         config = handle_config(config)
         self.comparer_name = config.get('comparer_name', "")
         self.compare_mode = config.get('compare_mode', 0)
@@ -450,7 +451,7 @@ class Comparer(Evaluator):
                                     path=step_path_1, endswith=self.file_type)
                                 filelist_2 = get_file_list(
                                     path=step_path_2, endswith=self.file_type)
-                                self.evaluator.filter.set_state(
+                                self.set_state(
                                     folder, epoch, step)
                                 self.compare_filelist(filelist_1, filelist_2)
 
@@ -481,12 +482,10 @@ class Comparer(Evaluator):
             f2.seek(0)
             pt_data_2 = torch.load(f2, map_location="cpu")
         self.set_current_files((file_path_1, file_path_2))
-        self.evaluator.evalute(pt_data_1, pt_data_2)
+        self.evalute(pt_data_1, pt_data_2)
 
     def set_current_files(self, current_files):
         self.current_files = current_files
-        self.evaluator.current_files = current_files
-        self.evaluator.filter.current_files = current_files
 
     def _check_path_exists(self, path):
         if not os.path.exists(path):
@@ -519,282 +518,6 @@ class Comparer(Evaluator):
 
         return both_file_list_1, both_file_list_2
 
-
-class Evaluator(object):
-
-    def __init__(self, config):
-        config = handle_config(config)
-        self.evaluation_metrics = config.get('evaluation_metrics', [])
-
-        self.verbose = 'verbose' in self.evaluation_metrics
-        self.skip_nn_module = 'skip_nn_module' in self.evaluation_metrics
-        self.skip_non_nn_module = 'skip_non_nn_module' in self.evaluation_metrics
-        self.current_module = ""
-        self.current_files = ()
-
-        self.registered_evaluations = dict()
-        if "L1" in self.evaluation_metrics:
-            self.register_evaluation("L1", self.evaluate_l1_loss)
-        if "AE" in self.evaluation_metrics:
-            self.register_evaluation("AE", self.evaluate_absolute_error)
-        if "MAE" in self.evaluation_metrics:
-            self.register_evaluation("MAE", self.evaluate_mean_absolute_error)
-        if "CS" in self.evaluation_metrics:
-            self.register_evaluation("CS", self.evaluate_cosine_similarity)
-        if "MSE" in self.evaluation_metrics:
-            self.register_evaluation("MSE", self.evaluate_mean_squared_error)
-        if "RMSE" in self.evaluation_metrics:
-            self.register_evaluation(
-                "RMSE", self.evaluate_root_mean_squared_error)
-        if "MAPE" in self.evaluation_metrics:
-            self.register_evaluation(
-                "MAPE", self.evaluate_mean_absolute_percentage_error)
-        self.filter = Filter(config)
-        self.compare_specifiy_modules = config.get('compare_specifiy_modules', {})
-
-    def register_evaluation(self, fn_name, evaluation_fn):
-        self.registered_evaluations[fn_name] = evaluation_fn
-
-    def evaluate_cosine_similarity(self, actual, desired):
-        return torch.nn.functional.cosine_similarity(
-            actual, desired, dim=0)
-
-    def evaluate_mean_squared_error(self, actual, desired):
-        return torch.mean((actual - desired) ** 2)
-
-    def evaluate_root_mean_squared_error(self, actual, desired):
-        return torch.sqrt(torch.mean((actual - desired) ** 2))
-
-    def evaluate_mean_absolute_percentage_error(self, actual, desired):
-        return 100 * torch.mean(torch.abs((actual - desired) / actual))
-
-    def evaluate_mean_absolute_error(self, actual, desired):
-        return torch.mean(torch.abs(actual - desired))
-
-    def evaluate_l1_loss(self, actual, desired):
-        # siyi's way
-        try:
-            actual = actual.cpu() if actual.is_cuda else actual
-            desired = desired.cpu() if desired.is_cuda else desired
-            l1_error = (actual - desired).float().abs().mean()
-            rel_error = l1_error / (actual.abs().float().mean())
-            if l1_error * rel_error > 10:
-                print(f'\n###\n should checked! : l1_error * rel_error > 10, current_module is : [{self.current_module}] , {self.filter.get_detail()}\n###\n')
-            return (l1_error.detach(), rel_error.detach())
-
-        except Exception as e:
-            print("ERROR : ", e)
-            raise "failed."
-
-    def evaluate_absolute_error(self, actual, desired):
-        absolute_error = torch.abs(actual - desired)
-        return absolute_error
-
-    def evalute_(self, actual, desired, prefix=""):
-        assert type(actual) == type(desired), f"type(actual) is {type(actual)} which is not same with type(desired): {type(desired)}"
-
-        if isinstance(actual, NewHookData):
-            assert actual.module_name==desired.module_name, f"module_name must be same : actual : {actual.module_name} , desired : {desired.module_name}"
-            self.current_module = actual.module_name
-            if hasattr(actual, "input"):
-                self.evalute_(actual.input, desired.input, prefix+'[  input ]')
-            if hasattr(actual, "output"):
-                self.evalute_(actual.output, desired.output,
-                              prefix+'[ output ]')
-            if hasattr(actual, "gradient"):
-                self.evalute_(actual.gradient, desired.gradient,
-                              prefix+'[gradient]')
-            if hasattr(actual, "gradient_grad"):
-                self.evalute_(actual.gradient_grad,
-                              desired.gradient_grad, prefix+'[gradient_grad]')
-        elif isinstance(actual, torch.Tensor):
-            for fn_name, evaluation_fn in self.registered_evaluations.items():
-                if not torch.is_floating_point(actual):
-                    actual = actual.double()
-                    desired = desired.double()
-                error = evaluation_fn(actual, desired)
-                self.filter.set_prefix(prefix)
-                if self.current_module is None or self.current_module == "":
-                    print(f'For debug : self.current_module == "" in here.!!!!, detail is {self.filter.get_detail()}.')
-                    print('actual is : ', actual)
-                    print('desired is : ', desired)
-
-                self.filter.push_data(
-                    error, fn_name, prefix, self.current_module, actual, desired)
-
-        elif isinstance(actual,transformers.modeling_outputs.BaseModelOutputWithPast):
-            if hasattr(actual, "last_hidden_state"):
-                self.evalute_(actual.last_hidden_state, desired.last_hidden_state, prefix+'[BaseModelOutputWithPast][last_hidden_state]')
-            if hasattr(actual, "past_key_values"):
-                self.evalute_(actual.past_key_values, desired.past_key_values, prefix+'[BaseModelOutputWithPast][past_key_values]')
-
-        elif isinstance(actual, transformers.modeling_outputs.CausalLMOutputWithPast):
-            if hasattr(actual, "logits"):
-                self.evalute_(actual.logits, desired.logits, prefix+'[CausalLMOutputWithPast][logits]')
-            if hasattr(actual, "past_key_values"):
-                self.evalute_(actual.past_key_values, desired.past_key_values, prefix+'[CausalLMOutputWithPast][past_key_values]')
-
-        elif isinstance(actual, (list, tuple)):
-            for idx, (val1, val2) in enumerate(zip(actual, desired)):
-                self.evalute_(val1, val2, prefix+f'[idx-{idx}]\t')
-
-        elif isinstance(actual, (int, float, bool, str)):
-            # non nn.module will have some input, ouput data, which type in (int, float, bool, str)
-            if (actual != desired or self.verbose):
-                print("[underlying type data not match]", prefix, "\nactual:\t", actual, "\ndesired:\t", desired)
-        else:
-            if actual is None and desired is None:
-                pass
-            else:
-                print(f"for debug : actual : {actual}, dir(actual) : {dir(actual)}, type(actual) : {type(actual)}")
-                print(f"for debug : desired : {desired}, dir(desired) : {dir(desired)}, type(desired) : {type(desired)}")
-                torch.save(actual, f"actual-{type(actual)}.pk")
-                torch.save(desired, f"actual-{type(desired)}.pk")
-                raise TypeError(f"Unsupported data type : {type(actual)}")
-
-    def evalute(self, data_1, data_2):
-        if self.skip_nn_module and data_1.classify == "nn.module" and data_2.classify == "nn.module":
-            return
-        if self.skip_non_nn_module and data_1.classify == "non nn.module" and data_2.classify == "non nn.module":
-            return
-
-        if data_1.module_name == data_2.module_name:
-            if self.verbose:
-                print("module_name: ", data_1.module_name)
-        else:
-            print(self.filter.get_detail())
-            print("module_name: \ndata_1 :", data_1.module_name,
-                  "\ndata_2 : ", data_2.module_name)
-            print(f"current_files is : {self.current_files}.")
-            raise f'\n###\n should checked!: module_name not match \n###\n'
-
-        if self._check_if_need_to_compare(data_1.module_name):
-            self.evalute_(data_1, data_2)
-
-    def _check_if_need_to_compare(self, module_name):
-        return is_need_to_filter_specifiy_modules(module_name, self.compare_specifiy_modules)
-
-class Filter(object):
-
-    def __init__(self, config):
-        config = handle_config(config)
-        self.filter_config = config.get('filter', {})
-        self.show_max_error_only = config.get("show_max_error_only", False)
-        if "global_filter" in self.filter_config:
-            setattr(self, "global_filter", eval(
-                str(self.filter_config["global_filter"])))
-        else:
-            self.global_filter = None
-
-        for name in ["L1_filter", "AE_filter", "CS_filter", "MSE_filter", "MAE_filter", "RMSE_filter", "MAPE_filter"]:
-            if name in self.filter_config:
-                setattr(self, name, self.filter_config[name])
-
-        self.compared_directory_1_name = config.get(
-            "compared_directory_1_name", "")
-        self.compared_directory_2_name = config.get(
-            "compared_directory_2_name", "")
-        self.topk_dict = defaultdict(list)
-
-        self.detail = ""
-        self.prefix = ""
-        self.current_files = ()
-        self.state = defaultdict()
-        self.registersi_signal = config.get('registersi_signal', True)
-        self.latest_conclusion_pk_filename = ""
-        atexit.register(self.conclusion)
-        if self.registersi_signal:
-            signal.signal(signal.SIGINT, self.conclusion)
-
-    def push_data(self, data=None, fn_name="", prefix="",  module="", actual=None, desired=None, attr=None):
-
-        if fn_name == "L1":
-            self.push_data(data=data[0], fn_name="l1_error", prefix=prefix,
-                           module=module, actual=actual, desired=desired, attr="L1_filter")
-            # self.push_data(data=data[1], fn_name="rel_error", prefix=prefix,
-            #                module=module, actual=actual, desired=desired, attr="L1_filter")
-        else:
-            max_data = torch.max(data)
-            attr = "{}_filter".format(fn_name) if attr is None else attr
-            if attr is not None and hasattr(self, attr):
-                filter_error = eval(str(getattr(self, attr)))
-            elif self.global_filter is not None:
-                filter_error = self.global_filter
-            else:
-                filter_error = None
-
-            if filter_error is None or max_data > filter_error:
-                self.detail = self.get_detail()
-                data_to_print = max_data if self.show_max_error_only else data
-                print("{}[{}] : {}".format(
-                    self.detail, fn_name, data_to_print), end='\n')
-
-                self.print_raw_data(module, actual, desired)
-                # todo : think about max_data or data
-                self.add_topk(fn_name, module, max_data, actual, desired)
-
-    def print_raw_data(self, module, actual, desired):
-        print("-------↓")
-        print(f"[module] : {module}")
-        if module is None or module == "":
-            print(f"something error. in {self.get_detail()}, module is None")
-        print(f"[actual] : {actual}")
-        print(f"[desired] : {desired}")
-        print("-------↑\n")
-
-    def add_topk(self, fn_name="", module="", error=None, actual=None, desired=None):
-        # if fn_name not in self.topk_dict:
-        #     self.topk_dict[fn_name] = defaultdict(list)
-        self.topk_dict[fn_name].append(
-            {
-                "module": module,
-                "error": error,
-                "actual": actual,
-                "desired": desired,
-                "detail": self.get_detail()
-            }
-        )
-
-    def print_topk(self, k=100):
-        for fn_name, lst in self.topk_dict.items():
-            sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
-            topk_lst = sorted_lst[:k]
-            print(f"Top {k} errors for function '{fn_name}':")
-            for index, item in enumerate(topk_lst):
-                module, error, actual, desired, detail = item["module"], item["error"], item["actual"], item["desired"], item["detail"]
-                print(
-                    f"\t{index} = {detail}\n {module}: {error:.6f} \n\t\t atual : {actual}, \n\t\t desired : {desired}\n\n")
-
-    def conclusion(self, k=100, save_pk=True):
-        if save_pk:
-            import time
-            for fn_name, lst in self.topk_dict.items():
-                sorted_lst = sorted(lst, reverse=True, key=lambda x: x["error"])
-                self.latest_conclusion_pk_filename = "topk_"+fn_name+"_"+str(int(time.time()))+".pk"
-                torch.save(sorted_lst[:k], self.latest_conclusion_pk_filename)
-        print("\n\n")
-        print("conclusion".center(20, '-'))
-        print(self.print_topk(k=k))
-
-    def set_state(self, folder, epoch, step):
-        self.state = {
-            "folder": folder,
-            "epoch": epoch,
-            "step": step,
-        }
-
-    def set_prefix(self, prefix):
-        self.prefix = prefix
-
-    def get_detail(self):
-        try:
-            r = f"[{self.state['folder']}][{self.state['epoch']}][{self.state['step']}]"
-        except:
-            r = ""
-        return r+f"[{self.prefix}][{self.current_files}]"
-
-    def get_latest_conclusion_pk_filename(self):
-        return self.latest_conclusion_pk_filename
 
 # TODO:
 # 4. 按照算子, 比较算子的误差，变化
