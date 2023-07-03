@@ -178,7 +178,7 @@ class Evaluator(Filter):
         config = handle_config(config)
         self.evaluation_metrics = config.get('evaluation_metrics', [])
 
-        self.verbose = 'verbose' in self.evaluation_metrics
+        self.evaluator_verbose = 'evaluator_verbose' in self.evaluation_metrics
         self.skip_nn_module = 'skip_nn_module' in self.evaluation_metrics
         self.skip_non_nn_module = 'skip_non_nn_module' in self.evaluation_metrics
         self.current_module = ""
@@ -291,7 +291,7 @@ class Evaluator(Filter):
 
         elif isinstance(actual, (int, float, bool, str)):
             # non nn.module will have some input, ouput data, which type in (int, float, bool, str)
-            if (actual != desired or self.verbose):
+            if (actual != desired or self.evaluator_verbose):
                 print("[underlying type data not match]", prefix, "\nactual:\t", actual, "\ndesired:\t", desired)
         else:
             if actual is None and desired is None:
@@ -310,7 +310,7 @@ class Evaluator(Filter):
             return
 
         if data_1.module_name == data_2.module_name:
-            if self.verbose:
+            if self.evaluator_verbose:
                 print("module_name: ", data_1.module_name)
         else:
             print(self.get_detail())
@@ -347,6 +347,19 @@ class Comparer(Evaluator):
             compare_options = config.get('compare_directory_options', {})
             self.compare_epochs = compare_options.get('compare_epochs', [])
             self.compare_steps = compare_options.get('compare_steps', [])
+            def _trans(untrans):
+                if untrans.startswith("[") and untrans.endswith(")"):
+                    # [start, end)
+                    start = int(untrans[1:-1].split(",")[0])
+                    end = int(untrans[1:-1].split(",")[1])
+                    return [num for num in range(start, end)]
+                elif isinstance(eval(untrans), int):
+                    return [eval(untrans)]
+                else:
+                    assert isinstance(eval(untrans), list)
+                    return eval(untrans)
+            self.compare_epochs = _trans(self.compare_epochs)
+            self.compare_steps = _trans(self.compare_steps)
 
             self.only_compare_input = compare_options.get(
                 'only_compare_input', False)
@@ -379,8 +392,8 @@ class Comparer(Evaluator):
         self.compare_both_file = not self.compare_by_order or config.get(
             "compare_both_file", False)
         self.current_files = ()
-        self.verbose = compare_options.get('verbose', False)
-        if self.verbose:
+        self.compare_verbose = compare_options.get('compare_verbose', False)
+        if self.compare_verbose:
             print(config)
 
     # TODO: complete compare mode and compare precision way.
@@ -460,21 +473,28 @@ class Comparer(Evaluator):
             both_file_list_1, both_file_list_2 = self._get_both_filelist(
                 filelist_1, filelist_2)
             for file1, file2 in tqdm(zip(both_file_list_1, both_file_list_2)):
+                # if self.compare_verbose:
+                #     print("filelist_1 : ", filelist_1)
+                #     print("filelist_2 : ", filelist_2)
                 self.compare_file(file1, file2)
         elif self.compare_by_order:
             with tqdm(zip(filelist_1, filelist_2)) as file_pbar:
                 for file1, file2 in file_pbar:
                     # file_pbar.set_description(desc=f"[{file1}]",  refresh=True)
+                    # if self.compare_verbose:
+                    #     print("filelist_1 : ", filelist_1)
+                    #     print("filelist_2 : ", filelist_2)
                     self.compare_file(file1, file2)
 
     def compare_file(self, file_path_1, file_path_2):
         if self.file_type == "pt":
-            if self.verbose:
+            if self.compare_verbose:
                 print("file_path_1 ", file_path_1)
                 print("file_path_2 ", file_path_2)
             self.compare_pt_file(file_path_1, file_path_2)
 
     def compare_pt_file(self, file_path_1, file_path_2):
+        assert file_path_1 != file_path_2
         with open(file_path_1, "rb") as f1:
             f1.seek(0)
             pt_data_1 = torch.load(f1, map_location="cpu")

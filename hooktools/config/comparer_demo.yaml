@@ -49,7 +49,7 @@ compare_directory_options:
 compare_filelist_options :
   compared_filelist_1 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683625252"
   compared_filelist_2 : "/LocalRun/blime/2_Pytorch/tools/hooktools/model/precision/tmp/tracer_demo_forward_hook_1683626887"
-verbose: true
+compare_verbose: true
 
 compare_by_order : true
 
@@ -78,7 +78,7 @@ evaluation_metrics:
   # - "MAPE"      # mean absolute percentage error
 
   # configuration
-  # - "verbose"                 # if comment out this option, some log will ignore
+  # - "evaluator_verbose"                 # if comment out this option, some log will ignore
   # - "skip_nn_module"          # "skip nn.module"
   # - "skip_non_nn_module"      # "skip non nn.module function"
 

@@ -87,10 +87,10 @@
             <option value="gradient">gradient</option>
         </select><br>
 
-        <label for="compare_epochs">compare_epoch: [目前只支持一个一个epoch对比, 如 -1, 0]</label>
+        <label for="compare_epochs">compare_epoch: 例如: -1 或者 [0,8）(开区间)</label>
         <input type="text" name="compare_epochs" id="compare_epochs" data-cache="true" value="" /><br>
 
-        <label for="compare_steps">compare_step: [目前只支持一个一个step对比, 如 -1, 0]</label>
+        <label for="compare_steps">compare_steps: 例如: 8 或者 [0,8）(开区间) </label>
         <input type="text" name="compare_steps" id="compare_steps" data-cache="true" value="" /><br>
 
         <label for="evaluation_metrics">比较方法: [L1 | AE | MAE | CS | MSE | RMSE | MAPE] </label>
@@ -113,15 +113,15 @@
 
     <button id="only-show-conclusion" onclick="onlyShowConclusion()">只显示总结结果</button>
 
-    <!-- 刷新输出结果按钮 -->
-    <button id="refresh-output" onclick="refreshOutput()">刷新输出结果</button>
+    <!-- 清空输出结果按钮 -->
+    <button id="refresh-output" onclick="refreshOutput()">清空输出结果</button>
 
 
     <pre class="output">{{ output }}</pre>
 
 
     <script>
-        // 刷新输出结果
+        // 清空输出结果
         function refreshOutput() {
             var outputElement = document.querySelector('.output');
             outputElement.textContent = '';  // 将输出结果清空

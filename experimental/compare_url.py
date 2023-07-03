@@ -22,15 +22,17 @@ class DirectorysConfig(object):
             'compared_directory_1':compared_directory_1,
             'compared_directory_2':compared_directory_2,
             'compare_folder_name':compare_folder_name,
-            'compare_epochs':[compare_epochs],
-            'compare_steps':[compare_steps],
+            'compare_epochs':compare_epochs,
+            'compare_steps':compare_steps,
+            # 'compare_verbose':True,
+
         }
         self.evaluation_metrics=[evaluation_metrics]
         self.registersi_signal=False
         self.filter = {
             "global_filter":filter,
         }
-        self.compare_by_order=True
+        self.compare_by_order = True,
 
     def __call__(self):
         print("For debug : DirectorysConfig : ", vars(self))
