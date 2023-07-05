@@ -1,5 +1,5 @@
 natsort
-transformers==4.27.1
+transformers==4.29.2
 flask
 pandas
 openpyxl
