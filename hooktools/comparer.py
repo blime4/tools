@@ -227,8 +227,13 @@ class Evaluator(Filter):
         try:
             actual = actual.cpu() if actual.is_cuda else actual
             desired = desired.cpu() if desired.is_cuda else desired
-            l1_error = (actual - desired).float().abs().mean()
-            rel_error = l1_error / (actual.abs().float().mean())
+            # 解决 inf 问题
+            finite_mask = torch.isfinite(actual) | torch.isfinite(desired)
+            filtered_actual = actual[finite_mask]
+            filtered_desired = desired[finite_mask]
+            l1_error = (filtered_actual - filtered_desired).float().abs().mean()
+            rel_error = l1_error / (filtered_actual.abs().float().mean())
+
             if l1_error * rel_error > 10:
                 print(f'\n###\n should checked! : l1_error * rel_error > 10, current_module is : [{self.current_module}] , {self.get_detail()}\n###\n')
             return (l1_error.detach(), rel_error.detach())
@@ -480,7 +485,7 @@ class Comparer(Evaluator):
         elif self.compare_by_order:
             with tqdm(zip(filelist_1, filelist_2)) as file_pbar:
                 for file1, file2 in file_pbar:
-                    # file_pbar.set_description(desc=f"[{file1}]",  refresh=True)
+                    file_pbar.set_description(desc=f"[{file1}]",  refresh=True)
                     # if self.compare_verbose:
                     #     print("filelist_1 : ", filelist_1)
                     #     print("filelist_2 : ", filelist_2)
@@ -541,5 +546,3 @@ class Comparer(Evaluator):
 
 # TODO:
 # 4. 按照算子, 比较算子的误差，变化
-# 4.2 提供一个函数，可以反复调用
-# 5 将Filter，Evaluator，Comparer 改成继承关系，增加一个Detail类来记录状态。
