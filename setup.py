@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 import sys
-python_min_version = (3, 6, 2)
+python_min_version = (3, 7, 5)
 version_range_max = max(sys.version_info[1], 8) + 1
 
 with open('requirements.txt') as f:
@@ -13,7 +13,7 @@ setup(
     author="DLframework Team",
     description="Pytorch hook tools",
     packages=find_packages(),
-    python_requires='>=3.6.2',
+    python_requires='>=3.7.5',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
