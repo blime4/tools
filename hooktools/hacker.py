@@ -8,6 +8,7 @@ import itertools
 import functools
 import torch.utils.hooks as hooks
 from typing import Any, Callable, Optional, Dict
+import transformers
 
 from hooktools.utils import handle_config
 
@@ -95,8 +96,13 @@ class WrapModule(HackedNNModule):
         try:
             return self.orig_fn(*args, **kwargs)
         except:
-            print("self.orig_fn: ",self.orig_fn.__name__, ", type is : ", type(self.orig_fn))
-            return self.orig_fn(*args, **kwargs)
+            try:
+                new_fn = functools.partial(self.orig_fn, self)  # 使用functools.partial来包装原始函数
+                return new_fn(*args, **kwargs)
+            except:
+                print("[error] self.orig_fn:", self.orig_fn.__name__, ", type is:", type(self.orig_fn))
+                return self.orig_fn(*args, **kwargs)
+
 
     def __repr__(self):
         return self.module_name
